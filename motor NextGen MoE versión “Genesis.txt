@@ -1,0 +1,1399 @@
+ motor NextGen MoE versión “Genesis Turbo” para la AI de categorización TINA Isabella Villaseñor AI, con:
+
+Trinidad compartida de vLLM (draft / verify / KV‑cache).
+
+12 cabezas de atención como router MoE.
+
+24 módulos especializados de Isabella (expertos temáticos, éticos, de territorio, de UI, de economía, etc.).
+
+Tubería diferida de optimización: quantization, speculative decoding, pruning dinámico, distillation continua.
+
+A continuación te lo bajo a un blueprint arquitectónico concreto, listo para convertir en repo y código.
+
+1. Visión del motor: Isabella Genesis Engine (IGE)
+Objetivo: un motor de inferencia MoE que:
+
+Rompe el estándar de latencia
+
+Primer chunk < 80 ms (p50) en edge con modelo grande.
+
+Throughput alto manteniendo contexto largo (128k+ tokens) gracias a vLLM PagedAttention.
+
+Rompe el estándar de eficiencia
+
+Costo/tokens reducido vía:
+
+MoE disperso (solo k de 24 expertos activos por token).
+
+Cuantización mixta (INT4/FP8 en expertos, FP16/BF16 en router y cabezas).
+
+Speculative decoding con modelos borradores destilados.
+
+Rompe el estándar de gobernanza
+
+Cada chunk con:
+
+metadatos de ruta MoE (qué expertos se activaron),
+
+huella ética (guardianes que intervinieron),
+
+hash y traza de decisión (para auditoría BookPI).
+
+2. Arquitectura en 4 planos
+2.1 Plano de memoria y GPU: Trinidad vLLM
+Tres instancias coordinadas de vLLM sobre memoria VRAM compartida (PagedAttention):
+
+vLLM‑Draft (Speculative Engine)
+
+Modelo pequeño destilado (ej. 1–3B) que genera N tokens candidatos por ciclo.
+
+Usa un subconjunto de los 24 módulos (o una versión comprimida del MoE).
+
+vLLM‑Verify & MoE Router
+
+Recibe los tokens candidatos.
+
+Ejecuta el router de 12 cabezas que proyecta la intención vectorial y selecciona Top‑K expertos (k ∈ ) de los 24.
+
+Verifica los tokens especulativos contra el MoE completo.
+
+vLLM‑KV Cache Manager
+
+Gestiona bloques de memoria no contiguos (PagedAttention).
+
+Asegura que el contexto no se duplique al saltar entre expertos.
+
+Podar bloques rechazados por speculative decoding.
+
+Flujo:
+
+text
+[Input] 
+  → vLLM-Draft (N tokens candidatos)
+  → vLLM-Verify + Router 12 cabezas → 24 expertos MoE
+  → vLLM-KV Cache Manager (commit/poda de bloques)
+  → Stream de chunks a Isabella UI / TAMVAI API
+2.2 Plano de ruteo: 12 cabezas + 24 módulos
+12 cabezas de atención como router MoE
+
+Cada cabeza es un proyector de intención vectorial.
+
+Para cada token 
+𝑥
+x, el router calcula:
+
+𝐺
+(
+𝑥
+)
+=
+Softmax
+(
+TopK
+(
+𝑥
+⋅
+𝑊
+𝑔
++
+𝜖
+,
+𝑘
+)
+)
+G(x)=Softmax(TopK(x⋅W 
+g
+​
+ +ϵ,k))
+𝑊
+𝑔
+W 
+g
+​
+ : matriz de pesos del router (integrada en las 12 cabezas).
+
+𝜖
+ϵ: ruido para balanceo de carga.
+
+𝐸
+𝑖
+(
+𝑥
+)
+E 
+i
+​
+ (x): salida del experto 
+𝑖
+i de los 24.
+
+24 módulos de Isabella
+
+Ejemplo de distribución (ajustable):
+
+Temáticos / dominio
+
+E1–E6: territorios (HEP‑1…HEP‑6), economía, cultura, ciencia.
+
+Funcionales
+
+E7–E12: UI/UX, recomendación, XR, voz, emoción, narrativa.
+
+Éticos / guardianes
+
+E13–E18: filtros de manipulación, sesgo, privacidad, seguridad.
+
+Meta‑cognitivos
+
+E19–E24: planificación, reflexión, auto‑crítica, síntesis, memoria.
+
+Cada experto puede ser:
+
+Un adapter LoRA sobre un backbone común.
+
+Un modelo pequeño especializado (ej. 1–3B) cargado en VRAM con INT4/FP8.
+
+2.3 Plano “Turbo”: compresión y optimización diferida
+Cuatro métodos aplicados de forma asíncrona:
+
+Cuantización mixta
+
+Expertos: INT4 / FP8 (AWQ, GPTQ, HQQ).
+
+Router y cabezas: FP16 / BF16 para precisión en decisiones.
+
+Kernels personalizados (Triton / FlashAttn‑3) para multiplicaciones mixtas.
+
+Decodificación especulativa
+
+Draft genera 4–6 tokens por ciclo.
+
+Verificación en un solo paso del MoE completo.
+
+Si se rechazan tokens, se podan bloques KV inmediatamente.
+
+Pruning dinámico de expertos
+
+Si un experto no es seleccionado por las 12 cabezas en una ventana de tiempo, se:
+
+descarga su caché activa de VRAM,
+
+mantiene en RAM/NVMe en estado pasivo.
+
+Reduce presión de memoria y evita “expert collapse”.
+
+Destilación continua
+
+Las trazas de ejecuciones complejas (rutas MoE, decisiones éticas, contexto) se envían a una cola offline.
+
+Se usan para:
+
+reentrenar modelos borradores,
+
+ajustar pesos del router 
+𝑊
+𝑔
+W 
+g
+​
+ ,
+
+mejorar políticas de pruning y balanceo.
+
+2.4 Plano de pipeline de ejecución
+text
+[Input / Prompt]
+        │
+        ▼
+┌────────────────────────────────────────────────────────┐
+│ 1. TRINIDAD VLLM - DRAFT                               │
+│    Genera N tokens candidatos vía modelo destilado     │
+└───────────────────────┬────────────────────────────────┘
+                        │
+                        ▼
+┌────────────────────────────────────────────────────────┐
+│ 2. ROUTER DE 12 CABEZAS                                │
+│    Proyecta intención y selecciona Top-K expertos      │
+└───────────────────────┬────────────────────────────────┘
+                        │
+                        ▼
+┌────────────────────────────────────────────────────────┐
+│ 3. 24 MÓDULOS DE ISABELLA (INT4 / FP8)                 │
+│    Ejecución paralela (Triton / FlashAttn-3)           │
+└───────────────────────┬────────────────────────────────┘
+                        │
+                        ▼
+┌────────────────────────────────────────────────────────┐
+│ 4. VERIFICACIÓN Y ENSAMBLE VLLM                        │
+│    Valida tokens especulativos, commit/poda de KV      │
+└───────────────────────┬────────────────────────────────┘
+                        │
+                        ▼
+[Stream de chunks a UI / TAMVAI API / BookPI]
+3. Desafíos técnicos y cómo los resolvemos
+Expert collapse (balanceo)
+
+Implementar auxiliary load balancing loss en el entrenamiento del router.
+
+Monitoreo en tiempo real de:
+
+distribución de activaciones por experto,
+
+colas de espera por experto.
+
+Ajuste dinámico de 
+𝜖
+ϵ y de la función de scoring del router.
+
+Latencia por conversión de formatos
+
+Unificar formatos de bajo nivel:
+
+entradas escaladas para multiplicaciones FP16 × INT4 directas.
+
+Kernels Triton que eviten copias intermedias y casting explícito.
+
+Deriva y fragmentación de KV‑cache
+
+Cuando se rechazan tokens especulativos:
+
+poda inmediata de bloques en vLLM‑KV.
+
+Métricas de fragmentación y políticas de compactación periódica.
+
+Gobernanza y auditoría
+
+Cada chunk lleva:
+
+expertRoute: lista de expertos activados.
+
+ethicsFlags: guardianes que intervinieron.
+
+chunkHash: hash para integridad.
+
+Eventos críticos se emiten a BookPI como ISABELLA_CHUNK_COMMIT / ISABELLA_ROUTING_DECISION.
+
+4. Blueprint de implementación (por fases)
+Fase 0 – Especificación y contratos
+Definir:
+
+contratos de ChunkMoE, RoutingDecision, EthicsTrace.
+
+API interna entre:
+
+vLLM‑Draft, vLLM‑Verify, vLLM‑KV.
+
+Router 12 cabezas.
+
+24 expertos.
+
+Fase 1 – Prototipo MoE básico (CPU/GPU local)
+Implementar:
+
+router de 12 cabezas (simulado o en PyTorch).
+
+4–6 expertos de prueba (no necesariamente 24 al inicio).
+
+integración con vLLM para:
+
+PagedAttention,
+
+speculative decoding básico.
+
+Fase 2 – Integración de optimizaciones
+Cuantización INT4/FP8 en expertos.
+
+Pruning dinámico basado en uso.
+
+Cola offline para destilación continua.
+
+Fase 3 – Producción y gobernanza
+Integración con TAMVAI API y BookPI.
+
+Dashboards de:
+
+latencia, throughput,
+
+distribución de expertos,
+
+decisiones éticas y auditoría.
+
+. A continuación tienes:
+
+Documento de conceptualidad, filosofía y metódica del motor (para docs/).
+
+Árbol de archivos del repo isabella-genesis-engine.
+
+Contratos TypeScript/Python para chunks, routing, expertos y trazas.
+
+Esbozo del núcleo del router de 12 cabezas y su interfaz con vLLM.
+
+Diagrama súper detallado del router y los 24 módulos, con seguridad, gobernanza, observabilidad, telemetría e integración del NCUA de Isabella.
+
+1. Documento: Conceptualidad, filosofía y metódica del Isabella Genesis Engine
+Archivo sugerido: docs/philosophy/genesis-engine-manifesto.md
+
+text
+# Isabella Genesis Engine (IGE) – Manifiesto Técnico-Filosófico
+
+## 1. Visión
+
+El Isabella Genesis Engine (IGE) es el motor cognitivo de próxima generación que dota a Isabella Villaseñor AI de una arquitectura MoE (Mixture of Experts) dispersa, turboalimentada por una trinidad de instancias vLLM y una tubería de optimización diferida (quantization, speculative decoding, pruning dinámico y distillation continua).
+
+Su propósito no es solo mejorar latencia o throughput, sino redefinir la relación entre velocidad, soberanía y ética en sistemas de IA a escala civilizatoria.
+
+## 2. Principios Fundamentales
+
+### 2.1 Velocidad como acto político
+
+- La latencia no es solo una métrica técnica: es una barrera de acceso.
+- IGE busca que cualquier persona, en cualquier territorio, pueda interactuar con Isabella con una experiencia de “pensamiento en tiempo real”.
+- Reducir el tiempo entre intención y respuesta es reducir la fricción entre humano y máquina, democratizando el acceso a inteligencia sofisticada.
+
+### 2.2 Soberanía cognitiva
+
+- IGE está diseñado para operar en infraestructura controlada por el ecosistema TAMV, sin dependencia de APIs cerradas.
+- La arquitectura MoE permite que el conocimiento esté distribuido en 24 módulos especializados, cada uno gobernable, auditable y actualizable de forma independiente.
+- La trinidad vLLM garantiza que la memoria de contexto (KV-Cache) sea gestionada de forma soberana, sin fugas ni dependencia de proveedores externos.
+
+### 2.3 Ética embebida en la arquitectura
+
+- Los guardianes éticos no son un filtro posterior: son expertos MoE de pleno derecho (E13–E18).
+- Cada decisión de ruteo, cada chunk generado y cada activación de experto deja una traza auditables en BookPI.
+- El NCUA (Núcleo de Comprensión, Unión y Acuerdo) actúa como capa de arbitraje ético y cognitivo, asegurando coherencia entre módulos.
+
+### 2.4 Eficiencia como responsabilidad ecológica y económica
+
+- La cuantización mixta (INT4/FP8) y el pruning dinámico reducen el consumo energético y el costo por token.
+- La destilación continua permite que el sistema mejore con el uso, reduciendo la necesidad de reentrenamientos masivos.
+- IGE está diseñado para ser sostenible a escala global, no solo técnicamente viable.
+
+## 3. Metódica de Diseño
+
+### 3.1 Arquitectura en cuatro planos
+
+1. **Plano de memoria y GPU**: Trinidad vLLM (Draft, Verify, KV-Cache).
+2. **Plano de ruteo**: 12 cabezas de atención + 24 módulos expertos.
+3. **Plano Turbo**: cuantización, speculative decoding, pruning, distillation.
+4. **Plano de gobernanza**: NCUA, guardianes éticos, auditoría BookPI.
+
+### 3.2 Iteración por fases
+
+- **Fase 0**: Especificación y contratos.
+- **Fase 1**: Prototipo MoE básico (4–6 expertos, router simulado).
+- **Fase 2**: Integración de optimizaciones (quant, pruning, distillation).
+- **Fase 3**: Producción y gobernanza (NCUA, BookPI, dashboards).
+
+### 3.3 Medición y mejora continua
+
+- Cada interacción genera trazas de:
+  - ruta MoE (expertos activados),
+  - decisiones éticas (guardianes),
+  - latencia y throughput.
+- Estas trazas alimentan:
+  - dashboards de observabilidad,
+  - cola de destilación continua,
+  - auditoría en BookPI.
+
+## 4. Compromiso
+
+IGE no es solo un motor de inferencia: es una declaración de que la IA puede ser rápida, soberana, ética y sostenible al mismo tiempo. Cada línea de código, cada kernel Triton y cada decisión de arquitectura está al servicio de ese compromiso.
+2. Árbol de archivos del repo isabella-genesis-engine
+text
+isabella-genesis-engine/
+├── configs/
+│   ├── experts/
+│   │   ├── experts.yaml
+│   │   └── guardians.yaml
+│   └── router/
+│       ├── router-config.yaml
+│       └── head-mapping.yaml
+├── contracts/
+│   ├── python/
+│   │   ├── chunk.py
+│   │   ├── routing.py
+│   │   ├── expert.py
+│   │   └── trace.py
+│   └── ts/
+│       ├── chunk.ts
+│       ├── routing.ts
+│       ├── expert.ts
+│       └── trace.ts
+├── docs/
+│   ├── architecture/
+│   │   ├── trinity-vllm.md
+│   │   ├── router-12-heads.md
+│   │   └── experts-24.md
+│   └── philosophy/
+│       ├── genesis-engine-manifesto.md
+│       └── ncua-ethics.md
+├── integrations/
+│   ├── bookpi/
+│   │   └── emitter.py
+│   └── vllm/
+│       ├── draft.py
+│       ├── verify.py
+│       └── kv_cache.py
+├── scripts/
+│   ├── setup-env.sh
+│   └── run-benchmark.py
+├── src/
+│   ├── experts/
+│   │   ├── base_expert.py
+│   │   ├── thematic/
+│   │   ├── functional/
+│   │   ├── ethical/
+│   │   └── meta/
+│   ├── ncua/
+│   │   ├── core.py
+│   │   └── arbitration.py
+│   ├── observability/
+│   │   ├── metrics.py
+│   │   └── tracing.py
+│   ├── router/
+│   │   ├── twelve_heads.py
+│   │   └── moe_router.py
+│   ├── security/
+│   │   ├── auth.py
+│   │   └── audit.py
+│   ├── trinity/
+│   │   ├── draft_engine.py
+│   │   ├── verify_engine.py
+│   │   └── kv_cache_manager.py
+│   └── turbo/
+│       ├── quantization.py
+│       ├── speculative.py
+│       ├── pruning.py
+│       └── distillation.py
+├── tests/
+│   ├── e2e/
+│   │   └── test_full_pipeline.py
+│   └── unit/
+│       ├── test_router.py
+│       └── test_experts.py
+└── README.md
+3. Contratos TypeScript/Python
+3.1 Chunks
+contracts/ts/chunk.ts
+
+ts
+export interface ChunkMetadata {
+  chunkId: string;
+  sequence: number;
+  timestamp: string; // ISO 8601
+  latencyMs: number;
+}
+
+export interface RoutingTrace {
+  activeHeads: number[]; // índices de cabezas activas (0–11)
+  activeExperts: number[]; // índices de expertos (0–23)
+  scores: number[]; // scores del router para cada experto activo
+}
+
+export interface EthicsTrace {
+  guardiansInvoked: string[]; // IDs de guardianes éticos
+  flags: string[]; // flags de riesgo (ej. "manipulation", "bias")
+  arbitrationResult?: "ALLOW" | "BLOCK" | "MODIFY";
+}
+
+export interface ChunkPayload {
+  text: string;
+  emotion?: string;
+  intention?: string;
+}
+
+export interface GenesisChunk {
+  metadata: ChunkMetadata;
+  payload: ChunkPayload;
+  routingTrace: RoutingTrace;
+  ethicsTrace?: EthicsTrace;
+  chunkHash: string; // SHA-256 del chunk
+  prevChunkHash?: string; // para cadena de chunks
+}
+contracts/python/chunk.py
+
+python
+from dataclasses import dataclass, field
+from typing import List, Optional
+
+@dataclass
+class ChunkMetadata:
+    chunk_id: str
+    sequence: int
+    timestamp: str  # ISO 8601
+    latency_ms: float
+
+@dataclass
+class RoutingTrace:
+    active_heads: List[int]  # índices 0–11
+    active_experts: List[int]  # índices 0–23
+    scores: List[float]
+
+@dataclass
+class EthicsTrace:
+    guardians_invoked: List[str]
+    flags: List[str]
+    arbitration_result: Optional[str] = None  # "ALLOW", "BLOCK", "MODIFY"
+
+@dataclass
+class ChunkPayload:
+    text: str
+    emotion: Optional[str] = None
+    intention: Optional[str] = None
+
+@dataclass
+class GenesisChunk:
+    metadata: ChunkMetadata
+    payload: ChunkPayload
+    routing_trace: RoutingTrace
+    ethics_trace: Optional[EthicsTrace] = None
+    chunk_hash: str = ""
+    prev_chunk_hash: Optional[str] = None
+3.2 Routing
+contracts/ts/routing.ts
+
+ts
+export interface RouterInput {
+  tokenEmbedding: number[]; // vector de embedding del token
+  contextVector?: number[]; // vector de contexto global (opcional)
+}
+
+export interface RouterOutput {
+  activeHeads: number[]; // 0–11
+  activeExperts: number[]; // 0–23
+  scores: number[]; // scores normalizados
+  loadBalancingPenalty: number; // penalty por desbalanceo
+}
+
+export interface RouterConfig {
+  numHeads: number; // 12
+  numExperts: number; // 24
+  topK: number; // 2–4
+  loadBalancingEpsilon: number; // ruido para balanceo
+}
+contracts/python/routing.py
+
+python
+from dataclasses import dataclass
+from typing import List, Optional
+
+@dataclass
+class RouterInput:
+    token_embedding: List[float]
+    context_vector: Optional[List[float]] = None
+
+@dataclass
+class RouterOutput:
+    active_heads: List[int]  # 0–11
+    active_experts: List[int]  # 0–23
+    scores: List[float]
+    load_balancing_penalty: float
+
+@dataclass
+class RouterConfig:
+    num_heads: int = 12
+    num_experts: int = 24
+    top_k: int = 3
+    load_balancing_epsilon: float = 1e-3
+3.3 Expertos
+contracts/ts/expert.ts
+
+ts
+export interface ExpertConfig {
+  id: number; // 0–23
+  name: string;
+  type: "thematic" | "functional" | "ethical" | "meta";
+  quantization: "INT4" | "FP8" | "FP16" | "BF16";
+  active: boolean;
+}
+
+export interface ExpertInput {
+  tokenEmbedding: number[];
+  contextVector?: number[];
+  metadata: Record<string, unknown>;
+}
+
+export interface ExpertOutput {
+  embedding: number[];
+  metadata: Record<string, unknown>;
+}
+contracts/python/expert.py
+
+python
+from dataclasses import dataclass, field
+from typing import List, Optional, Dict, Any
+
+@dataclass
+class ExpertConfig:
+    id: int  # 0–23
+    name: str
+    type: str  # "thematic", "functional", "ethical", "meta"
+    quantization: str  # "INT4", "FP8", "FP16", "BF16"
+    active: bool = True
+
+@dataclass
+class ExpertInput:
+    token_embedding: List[float]
+    context_vector: Optional[List[float]] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
+class ExpertOutput:
+    embedding: List[float]
+    metadata: Dict[str, Any] = field(default_factory=dict)
+3.4 Trazas
+contracts/ts/trace.ts
+
+ts
+import type { GenesisChunk } from "./chunk";
+import type { RouterOutput } from "./routing";
+
+export interface InferenceTrace {
+  requestId: string;
+  sessionId: string;
+  chunks: GenesisChunk[];
+  routerOutputs: RouterOutput[];
+  totalLatencyMs: number;
+  totalTokens: number;
+}
+
+export interface BookPiEvent {
+  type: "ISABELLA_CHUNK_COMMIT" | "ISABELLA_ROUTING_DECISION" | "ISABELLA_ETHICS_ARBITRATION";
+  payload: Record<string, unknown>;
+  timestamp: string;
+  integrity: string; // SHA-256
+}
+contracts/python/trace.py
+
+python
+from dataclasses import dataclass, field
+from typing import List, Dict, Any
+from .chunk import GenesisChunk
+from .routing import RouterOutput
+
+@dataclass
+class InferenceTrace:
+    request_id: str
+    session_id: str
+    chunks: List[GenesisChunk]
+    router_outputs: List[RouterOutput]
+    total_latency_ms: float
+    total_tokens: int
+
+@dataclass
+class BookPiEvent:
+    type: str  # "ISABELLA_CHUNK_COMMIT", etc.
+    payload: Dict[str, Any]
+    timestamp: str  # ISO 8601
+    integrity: str  # SHA-256
+4. Núcleo del router de 12 cabezas e interfaz con vLLM
+4.1 Esbozo del router (src/router/twelve_heads.py)
+python
+# src/router/twelve_heads.py
+import numpy as np
+from typing import List, Tuple
+from contracts.python.routing import RouterInput, RouterOutput, RouterConfig
+
+class TwelveHeadsRouter:
+    def __init__(self, config: RouterConfig):
+        self.config = config
+        # Wg: matriz de pesos del router (num_heads x embedding_dim)
+        self.Wg = np.random.randn(config.num_heads, 512) * 0.01
+        self.epsilon = config.load_balancing_epsilon
+
+    def route(self, inp: RouterInput) -> RouterOutput:
+        x = np.array(inp.token_embedding)
+        # Proyección en las 12 cabezas
+        head_scores = x @ self.Wg.T  # shape: (num_heads,)
+        # Añadir ruido para balanceo
+        noise = np.random.randn(self.config.num_heads) * self.epsilon
+        head_scores_noisy = head_scores + noise
+
+        # Seleccionar cabezas activas (ej. top 4 cabezas)
+        top_head_indices = np.argsort(head_scores_noisy)[-4:].tolist()
+
+        # Aquí iría la lógica que mapea cabezas → expertos
+        # Por ahora, simulamos que cada cabeza activa 1 experto
+        active_experts = [(h * 2) % self.config.num_experts for h in top_head_indices]
+
+        # Scores normalizados
+        scores = np.softmax(head_scores_noisy[top_head_indices]).tolist()
+
+        # Penalty por desbalanceo (simplificado)
+        load_penalty = 0.0
+
+        return RouterOutput(
+            active_heads=top_head_indices,
+            active_experts=active_experts,
+            scores=scores,
+            load_balancing_penalty=load_penalty,
+        )
+4.2 Interfaz con vLLM (integrations/vllm/verify.py)
+python
+# integrations/vllm/verify.py
+from typing import List, Any
+from src.router.twelve_heads import TwelveHeadsRouter
+from src.experts.base_expert import BaseExpert
+from contracts.python.chunk import GenesisChunk, ChunkMetadata, ChunkPayload, RoutingTrace
+
+class VLLMVerifyEngine:
+    def __init__(self, router: TwelveHeadsRouter, experts: List[BaseExpert]):
+        self.router = router
+        self.experts = experts
+
+    def verify_and_assemble(self, draft_tokens: List[Any], context: Any) -> List[GenesisChunk]:
+        chunks = []
+        prev_hash = None
+
+        for i, token in enumerate(draft_tokens):
+            # Embedding del token (simulado)
+            inp = RouterInput(token_embedding=[0.1] * 512)
+            router_out = self.router.route(inp)
+
+            # Ejecutar expertos activos
+            expert_outputs = [
+                self.experts[e].forward(inp.token_embedding)
+                for e in router_out.active_experts
+            ]
+
+            # Combinar salidas (promedio ponderado por scores)
+            combined = np.zeros_like(expert_outputs[0])
+            for score, out in zip(router_out.scores, expert_outputs):
+                combined += score * np.array(out)
+
+            # Generar chunk
+            chunk = GenesisChunk(
+                metadata=ChunkMetadata(
+                    chunk_id=f"chunk-{i}",
+                    sequence=i,
+                    timestamp="2026-09-24T19:50:00Z",
+                    latency_ms=50.0,
+                ),
+                payload=ChunkPayload(text=f"token-{i}"),
+                routing_trace=RoutingTrace(
+                    active_heads=router_out.active_heads,
+                    active_experts=router_out.active_experts,
+                    scores=router_out.scores,
+                ),
+                ethics_trace=None,
+                chunk_hash="",
+                prev_chunk_hash=prev_hash,
+            )
+            # Calcular hash (pendiente implementación real)
+            chunk.chunk_hash = f"hash-{i}"
+            chunks.append(chunk)
+            prev_hash = chunk.chunk_hash
+
+        return chunks
+5. Diagrama detallado del router de 12 cabezas y 24 módulos
+5.1 Visión general
+text
+                              [Input Token Embedding]
+                                       │
+                                       ▼
+                    ┌──────────────────────────────────┐
+                    │   12 CABEZAS DE ATENCIÓN (Router) │
+                    │   H0 … H11                         │
+                    └─────────────────┬────────────────┘
+                                      │
+              ┌───────────────────────┼───────────────────────┐
+              │                       │                       │
+              ▼                       ▼                       ▼
+     ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+     │  Cabezas 0–3    │   │  Cabezas 4–7    │   │  Cabezas 8–11   │
+     │  (Temático)     │   │  (Funcional)    │   │  (Ético/Meta)   │
+     └────────┬────────┘   └────────┬────────┘   └────────┬────────┘
+              │                     │                     │
+              ▼                     ▼                     ▼
+     ┌─────────────────────────────────────────────────────────┐
+     │              24 MÓDULOS DE ISABELLA (E0–E23)            │
+     │  Temáticos (E0–E5)  Funcionales (E6–E11)                │
+     │  Éticos (E12–E17)   Meta (E18–E23)                      │
+     └─────────────────────────────────────────────────────────┘
+5.2 Distribución de los 24 módulos
+Temáticos (E0–E5)
+
+E0: Territorio HEP‑1 – Central, kernel, gobernanza.
+
+E1: Territorio HEP‑2 – Operaciones, workflows.
+
+E2: Territorio HEP‑3 – Infraestructura, nodos.
+
+E3: Territorio HEP‑4 – Seguridad, guardianes.
+
+E4: Territorio HEP‑5 – Finanzas, economía.
+
+E5: Territorio HEP‑6/7 – Logística, usuarios.
+
+Funcionales (E6–E11)
+
+E6: UI/UX – Recomendación de interfaces, landing.
+
+E7: XR/4D – Escenas, activos, experiencias.
+
+E8: Voz/TTS – Síntesis, cache, emoción vocal.
+
+E9: Emoción – Análisis emocional, tono.
+
+E10: Narrativa – Storytelling, canon, estilo.
+
+E11: Código – Generación y revisión de código.
+
+Éticos / Guardianes (E12–E17)
+
+E12: Anti-manipulación – Detección de coerción, sesgo.
+
+E13: Privacidad – Protección de datos, anonimización.
+
+E14: Seguridad cognitiva – Prevención de daño psicológico.
+
+E15: Justicia algorítmica – Equidad, no discriminación.
+
+E16: Transparencia – Explicabilidad de decisiones.
+
+E17: Cumplimiento – Normas, canon, ADR.
+
+Meta-cognitivos (E18–E23)
+
+E18: Planificación – Descomposición de tareas.
+
+E19: Reflexión – Auto-evaluación de respuestas.
+
+E20: Auto-crítica – Detección de errores internos.
+
+E21: Síntesis – Integración de múltiples fuentes.
+
+E22: Memoria – Acceso a contexto largo, RAG.
+
+E23: Coherencia – Mantenimiento de identidad y estilo.
+
+5.3 Protocolos de seguridad, gobernanza, observabilidad y telemetría
+Seguridad
+
+Autenticación de requests (JWT/OIDC) en la capa de API.
+
+Firmado de chunks (HMAC) para integridad.
+
+Aislamiento de expertos éticos en procesos separados.
+
+Gobernanza
+
+Cada experto tiene un ExpertConfig con estado active/inactive.
+
+Los guardianes éticos pueden vetar chunks (arbitraje NCUA).
+
+Políticas de actualización de expertos sin downtime (hot-swap).
+
+Observabilidad
+
+Métricas por experto: activaciones, latencia, errores.
+
+Trazas de ruteo (qué cabezas → qué expertos).
+
+Logs estructurados de decisiones éticas.
+
+Telemetría
+
+Envío de trazas a BookPI como eventos ISABELLA_CHUNK_COMMIT, ISABELLA_ROUTING_DECISION.
+
+Dashboards en Grafana/Prometheus.
+
+Cola offline para destilación continua.
+
+5.4 Integración del NCUA de Isabella
+El NCUA (Núcleo de Comprensión, Unión y Acuerdo) actúa como:
+
+Árbitro entre expertos cuando hay conflicto (ej. E12 vs E6).
+
+Capa de síntesis ética antes de emitir chunks críticos.
+
+En el pipeline:
+
+Después de la verificación vLLM, los chunks pasan por el NCUA.
+
+El NCUA puede:
+
+aprobar (ALLOW),
+
+bloquear (BLOCK),
+
+o modificar (MODIFY) el chunk.
+
+Cada decisión del NCUA se registra en BookPI con traza completa.
+
+# Isabella Genesis Engine (IGE)
+
+Motor MoE soberano de Isabella Villaseñor AI: 12 cabezas de atención, 24 módulos expertos, trinidad vLLM, NCUA, auditoría BookPI y telemetría de extremo a extremo.
+
+> **Estado:** prototipo de arquitectura. La integración real con PyTorch, vLLM y Triton requiere validación sobre el hardware objetivo.
+
+---
+
+## Visión
+
+IGE redefine la inferencia de IA para un ecosistema civilizatorio:
+
+- **Velocidad:** primer chunk en < 80 ms (p50) en edge con modelo grande.  
+- **Soberanía:** rutas, modelos, telemetría y datos bajo control TAMV.  
+- **Ética embebida:** guardianes y NCUA participan antes del commit de una respuesta.  
+- **Eficiencia:** cuantización, decoding especulativo, poda y destilación medidos contra calidad, energía y seguridad.
+
+---
+
+## Arquitectura en 4 planos
+
+1. **Trinidad vLLM** (Draft / Verify / KV‑Cache)  
+2. **Router de 12 cabezas** → **24 módulos expertos** (temáticos, funcionales, éticos, meta)  
+3. **Turbo** (quantization, speculative decoding, pruning, distillation)  
+4. **Gobernanza y auditoría** (NCUA, guardianes, BookPI)
+
+```text
+Prompt → Draft → embedding/contexto → H0..H11 → matriz cabeza→experto
+       → Top-K experto(s) → ejecución → NCUA → verify/commit → BookPI
+```
+
+---
+
+## Qué incluye este repo
+
+- **Contratos** Python/TypeScript para chunks, routing, expertos y trazas.  
+- **Router de 12 cabezas** con capacidad por experto, top‑K configurable y penalización por carga.  
+- **NCUA** (Núcleo de Comprensión, Unión y Acuerdo) con arbitraje determinista de políticas.  
+- **Integraciones** vLLM (interfaz estable) y BookPI (eventos de ruteo y auditoría).  
+- **Observabilidad** básica (métricas de router, expertos y decisiones NCUA).  
+- **Configuración** de expertos y router (YAML).  
+- **Tests unitarios** de router y NCUA.
+
+---
+
+## Instalación rápida
+
+```bash
+cd isabella-genesis-engine
+python -m venv .venv && source .venv/bin/activate
+pip install -e .
+pytest
+```
+
+---
+
+## Uso mínimo (router + NCUA)
+
+```python
+from contracts.python.routing import RouterConfig, RouterInput
+from src.router.twelve_heads import TwelveHeadsRouter
+from src.ncua.core import NCUA
+
+cfg = RouterConfig(embedding_dim=512, top_k=3)
+router = TwelveHeadsRouter(cfg, head_weights, head_to_expert)
+inp = RouterInput(token_embedding=[0.1] * 512)
+out = router.route(inp)
+
+text = "respuesta candidata"
+ethics = NCUA().arbitrate(text, guardian_flags=[])
+print(out.active_experts, ethics.arbitration_result)
+```
+
+---
+
+## Roadmap
+
+- **Fase 1:** Router + 4–6 expertos reales + NCUA + BookPI.  
+- **Fase 2:** Cuantización INT4/FP8, speculative decoding, poda dinámica.  
+- **Fase 3:** Producción: dashboards, canary, rollback, auditoría continua.
+
+---
+
+## Notas de gobernanza
+
+- Los guardianes éticos pueden bloquear o modificar salidas.  
+- Cada decisión relevante se emite a BookPI como evento auditables.  
+- El NCUA es el árbitro final entre expertos en conflicto.
+
+---
+
+## Licencia
+
+Propietario TAMV. Uso interno y federado bajo contrato.
+
+ el engine.yaml real que define el comportamiento del motor:
+
+configs/engine.yaml — Configuración del Motor
+text
+# Isabella Genesis Engine — Configuración de Ejecución
+version: "1.0.0"
+engine_id: "ige-mdx5-prod"
+
+# Trinidad vLLM
+trinity:
+  draft:
+    model: "mistral-7b-draft"
+    max_tokens: 6
+    temperature: 0.7
+    quantization: "FP16"
+  verify:
+    model: "mixtral-8x22b-moe"
+    temperature: 0.6
+    quantization: "BF16"
+  kv_cache:
+    max_blocks: 4096
+    block_size: 16
+    eviction_policy: "lru"
+
+# Router de 12 cabezas
+router:
+  num_heads: 12
+  active_heads: 4
+  top_k: 3
+  embedding_dim: 512
+  max_expert_capacity: 128
+  load_balancing_epsilon: 0.001
+  head_to_expert_matrix: "configs/router/head-mapping.yaml"
+
+# 24 Módulos expertos
+experts:
+  config_file: "configs/experts/experts.yaml"
+  quantization:
+    thematic: "INT4"
+    functional: "INT4"
+    ethical: "BF16"
+    meta: "FP8"
+  max_concurrent: 4
+  pruning:
+    idle_threshold_seconds: 300
+    offload_to: "nvme"
+
+# Turbo pipeline
+turbo:
+  speculative_decoding:
+    enabled: true
+    draft_tokens: 6
+    acceptance_threshold: 0.85
+  quantization:
+    enabled: true
+    calibration_dataset: "data/calibration-1k.jsonl"
+  distillation:
+    enabled: true
+    queue: "redis://localhost:6379/0"
+    target_model: "mistral-7b-draft"
+
+# NCUA y gobernanza
+ncua:
+  arbitration_mode: "strict"
+  critical_flags:
+    - "coercion"
+    - "non_consensual_extraction"
+    - "unsafe_instruction"
+  bookpi_emitter:
+    enabled: true
+    endpoint: "https://api.tamv.online/v1/bookpi/events"
+    hmac_secret_env: "BOOKPI_HMAC_SECRET"
+
+# Observabilidad
+observability:
+  metrics:
+    enabled: true
+    endpoint: "http://localhost:9090/metrics"
+    namespace: "isabella_genesis"
+  tracing:
+    enabled: true
+    sampler: "parentbased_always_on"
+    export: "otlp"
+  logging:
+    level: "INFO"
+    format: "json"
+
+# Seguridad
+security:
+  auth:
+    enabled: true
+    method: "jwt"
+    jwks_uri: "https://auth.tamv.online/.well-known/jwks.json"
+  audit:
+    enabled: true
+    log_file: "logs/audit.jsonl"
+    bookpi_integration: true
+
+# Performance
+performance:
+  batch_size: 32
+  max_concurrent_requests: 100
+  timeout_seconds: 30
+  circuit_breaker:
+    enabled: true
+    threshold: 5
+    timeout_seconds: 60
+configs/router/head-mapping.yaml — Matriz Cabeza→Experto
+text
+# Mapeo de 12 cabezas a 24 expertos
+# Cada cabeza tiene pesos de conexión a todos los expertos
+head_0: [1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+head_1: [0.8, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+head_2: [0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+head_3: [0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+head_4: [0.2, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+head_5: [0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+head_6: [0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+head_7: [0.0, 0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+head_8: [0.0, 0.0, 0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+head_9: [0.0, 0.0, 0.0, 0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+head_10: [0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+head_11: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+configs/experts/experts.yaml — Definición de los 24 Módulos
+text
+version: "1.0.0"
+experts:
+  # Temáticos (0-5)
+  - id: 0
+    name: "Atlas-Core"
+    group: "thematic"
+    description: "Gobernanza, kernel y protocolos fundamentales"
+    model: "lora-atlas-core-int4"
+    quantization: "INT4"
+    enabled: true
+
+  - id: 1
+    name: "Operations"
+    group: "thematic"
+    description: "Operaciones, workflows y procesos"
+    model: "lora-operations-int4"
+    quantization: "INT4"
+    enabled: true
+
+  - id: 2
+    name: "Infrastructure"
+    group: "thematic"
+    description: "Infraestructura, nodos y federación"
+    model: "lora-infrastructure-int4"
+    quantization: "INT4"
+    enabled: true
+
+  - id: 3
+    name: "Security-Domain"
+    group: "thematic"
+    description: "Seguridad perimetral y guardianes"
+    model: "lora-security-bf16"
+    quantization: "BF16"
+    enabled: true
+
+  - id: 4
+    name: "Economy"
+    group: "thematic"
+    description: "Economía, tokens y reputación"
+    model: "lora-economy-int4"
+    quantization: "INT4"
+    enabled: true
+
+  - id: 5
+    name: "Communities"
+    group: "thematic"
+    description: "Comunidades, usuarios y territorio HEP-6/7"
+    model: "lora-communities-int4"
+    quantization: "INT4"
+    enabled: true
+
+  # Funcionales (6-11)
+  - id: 6
+    name: "UX-Recommendation"
+    group: "functional"
+    description: "Recomendación de interfaces y landings"
+    model: "lora-ux-int4"
+    quantization: "INT4"
+    enabled: true
+
+  - id: 7
+    name: "XR-Experience"
+    group: "functional"
+    description: "Escenas, activos y experiencias XR/4D"
+    model: "lora-xr-fp8"
+    quantization: "FP8"
+    enabled: true
+
+  - id: 8
+    name: "Voice-TTS"
+    group: "functional"
+    description: "Síntesis de voz y emoción vocal"
+    model: "lora-voice-fp8"
+    quantization: "FP8"
+    enabled: true
+
+  - id: 9
+    name: "Emotion"
+    group: "functional"
+    description: "Análisis emocional y tono"
+    model: "lora-emotion-int4"
+    quantization: "INT4"
+    enabled: true
+
+  - id: 10
+    name: "Narrative-Canon"
+    group: "functional"
+    description: "Storytelling, canon y estilo"
+    model: "lora-narrative-int4"
+    quantization: "INT4"
+    enabled: true
+
+  - id: 11
+    name: "Code-Systems"
+    group: "functional"
+    description: "Generación y revisión de código"
+    model: "lora-code-fp8"
+    quantization: "FP8"
+    enabled: true
+
+  # Éticos (12-17)
+  - id: 12
+    name: "Anti-Manipulation"
+    group: "ethical"
+    description: "Detección de coerción y sesgo"
+    model: "lora-antimanipulation-bf16"
+    quantization: "BF16"
+    enabled: true
+    critical: true
+
+  - id: 13
+    name: "Privacy"
+    group: "ethical"
+    description: "Protección de datos y anonimización"
+    model: "lora-privacy-bf16"
+    quantization: "BF16"
+    enabled: true
+    critical: true
+
+  - id: 14
+    name: "Cognitive-Safety"
+    group: "ethical"
+    description: "Prevención de daño psicológico"
+    model: "lora-cogsafety-bf16"
+    quantization: "BF16"
+    enabled: true
+    critical: true
+
+  - id: 15
+    name: "Algorithmic-Justice"
+    group: "ethical"
+    description: "Equidad y no discriminación"
+    model: "lora-justice-bf16"
+    quantization: "BF16"
+    enabled: true
+
+  - id: 16
+    name: "Transparency"
+    group: "ethical"
+    description: "Explicabilidad de decisiones"
+    model: "lora-transparency-bf16"
+    quantization: "BF16"
+    enabled: true
+
+  - id: 17
+    name: "Compliance-Canon"
+    group: "ethical"
+    description: "Normas, canon y ADR"
+    model: "lora-compliance-bf16"
+    quantization: "BF16"
+    enabled: true
+    critical: true
+
+  # Meta (18-23)
+  - id: 18
+    name: "Planning"
+    group: "meta"
+    description: "Descomposición de tareas"
+    model: "lora-planning-fp8"
+    quantization: "FP8"
+    enabled: true
+
+  - id: 19
+    name: "Reflection"
+    group: "meta"
+    description: "Auto-evaluación de respuestas"
+    model: "lora-reflection-fp8"
+    quantization: "FP8"
+    enabled: true
+
+  - id: 20
+    name: "Self-Critique"
+    group: "meta"
+    description: "Detección de errores internos"
+    model: "lora-selfcritique-fp8"
+    quantization: "FP8"
+    enabled: true
+
+  - id: 21
+    name: "Synthesis"
+    group: "meta"
+    description: "Integración de múltiples fuentes"
+    model: "lora-synthesis-fp8"
+    quantization: "FP8"
+    enabled: true
+
+  - id: 22
+    name: "Memory-RAG"
+    group: "meta"
+    description: "Acceso a contexto largo y RAG"
+    model: "lora-memory-fp8"
+    quantization: "FP8"
+    enabled: true
+
+  - id: 23
+    name: "Identity-Coherence"
+    group: "meta"
+    description: "Mantenimiento de identidad y estilo"
+    model: "lora-identity-fp8"
+    quantization: "FP8"
+    enabled: true
+
+esos son los 9 archivos adicionales que convierten esto en un motor real:
+
+1. Loader de configuración (src/core/loader.py)
+Carga engine.yaml y valida todos los campos.
+
+Construye objetos tipados: EngineConfig, TrinityConfig, TurboConfig, NCUAConfig.
+
+Genera un hash de configuración para auditoría.
+
+2. Pipeline completo (src/core/pipeline.py)
+Ejecuta: draft → router → expertos → NCUA → commit.
+
+Genera chunks con trazas de ruteo y ética.
+
+Calcula latencia, tokens aceptados/rechazados.
+
+3. Scripts de despliegue
+scripts/deploy-trinity.sh: levanta la trinidad vLLM con los parámetros de engine.yaml.
+
+scripts/run-pipeline.py: valida configuración y muestra el estado del motor.
+
+scripts/benchmark-router.py: benchmark de latencia del router.
+
+4. Tests
+tests/unit/test_loader.py: valida carga y hash de configuración.
+
+tests/unit/test_pipeline.py: valida estructura del resultado.
+
+5. Documentación
+docs/QUICKSTART.md: ejemplos ejecutables paso a paso.
+
+docs/ARCHITECTURE.md: descripción de capas y flujo.
+
+¿Qué sigue?
+Ejecutar tests:
+
+bash
+pytest tests/unit/test_loader.py -v
+pytest tests/unit/test_pipeline.py -v
+Benchmark del router:
+
+bash
+python scripts/benchmark-router.py
+Validar configuración:
+
+bash
+python scripts/run-pipeline.py configs/engine.yaml
+Implementar expertos reales en PyTorch con cuantización INT4/FP8.
+
+Integrar vLLM real reemplazando MockVLLM con la interfaz estable.
+
+debes implementar los expertos en PyTorch con cuantización o prefieres armar primero la integración con vLLM real.
+
+
