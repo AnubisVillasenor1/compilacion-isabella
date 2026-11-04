@@ -1,0 +1,2135 @@
+tienes secrets, tokens, api keys que se ingresaron revisalas para que con ellas completes el atlas trascendece: Aquí tienes la propuesta final del archivo en formato de apertura editorial y técnica, ya consolidada para Atlas Trascendence / TAMV. La escribí para que funcione como introducción maestra del compendio, el manifiesto y la publicación en Zenodo, con una visión amplia, operativa y defendible.
+ATLAS TRASCENDENCE
+Propuesta final de descripción, alcance y funcionalidad
+ATLAS Trascendence es un ecosistema digital soberano para la preservación, organización, federación y explotación inteligente del conocimiento. No es una aplicación aislada ni un frontend con documentación decorativa: es una arquitectura viva concebida para unir memoria institucional, identidad, publicación académica, observabilidad operacional, federación de sistemas y asistencia cognitiva dentro de una misma base conceptual y técnica.
+Su propósito es convertir información dispersa en conocimiento estructurado, trazable y reutilizable. Para ello, ATLAS integra documentos, eventos, identidades, relaciones, versiones, auditorías y publicaciones en un modelo federado que permite operar con integridad, reproducibilidad y control. El sistema no sólo almacena contenido; lo interpreta, lo vincula, lo valida y lo prepara para ser publicado, sincronizado, auditado y reutilizado por otros nodos del ecosistema TAMV.
+Naturaleza del sistema
+ATLAS funciona como una plataforma de conocimiento y operación de nueva generación. Su diseño asume que la realidad institucional no puede resolverse con un repositorio simple ni con una interfaz bonita: requiere capas separadas de identidad, contenido, federación, publicación, seguridad, observabilidad y gobierno semántico. Por eso, el sistema se organiza como una arquitectura modular, event-driven, API-first, observable y federada.
+El proyecto incorpora una lógica de crecimiento progresivo. En su núcleo hay un registro canónico de documentos y entidades; alrededor de ese núcleo orbitan servicios de identidad, publicación, conexión con federados externos, trazabilidad, auditoría, análisis semántico, y eventualmente inteligencia asistida por IA. El objetivo no es sólo “hacer software”, sino construir un medio durable para producir, preservar y distribuir conocimiento con control y continuidad.
+Qué hace ATLAS
+ATLAS realiza varias funciones simultáneas:
+Registra y normaliza documentos, manifiestos, compendios y activos de conocimiento.
+Vincula identidades institucionales y académicas como ORCID, GitHub y repositorios externos.
+Versiona contenido y conserva un historial verificable de cambios.
+Publica resultados hacia nodos federados como Zenodo, Figshare, OpenAIRE y GitHub.
+Mantiene auditoría completa de eventos, accesos, modificaciones y sincronizaciones.
+Observa la salud del sistema mediante métricas, logs, trazas y alertas.
+Aplica reglas de gobernanza y validación para evitar divergencia arquitectónica.
+Expone el conocimiento de forma navegable, reutilizable y extensible.
+En términos prácticos, ATLAS actúa como un puente entre memoria, publicación, identidad y federación. Un documento no queda encerrado en un archivo: se convierte en una entidad viva con autoría, versión, relación semántica, trazabilidad y posibilidad de anclaje en múltiples sistemas.
+Cómo lo hace
+La lógica del sistema se apoya en una arquitectura distribuida y controlada. El usuario interactúa con una interfaz limpia; esa interfaz llama a un punto de entrada controlado; el punto de entrada valida identidad, permisos y formato; luego enruta la operación hacia servicios especializados. Cada servicio resuelve un dominio concreto: documentos, identidades, publicaciones, eventos, auditoría, seguridad o telemetría.
+El corazón operativo es el flujo de eventos. Cuando ocurre una acción importante —crear un documento, vincular una identidad, solicitar una publicación, reservar un DOI o sincronizar un federado— el sistema genera un evento. Ese evento se conserva, se audita y puede activar automatizaciones o workflows. Así, ATLAS no depende de lógica dispersa e incontrolable, sino de procesos trazables y repetibles.
+Este enfoque permite que el sistema crezca sin perder forma. La federación no se implementa como acoplamiento directo entre piezas, sino como contratos bien definidos, adaptadores desacoplados y políticas de sincronización. Cada federado externo se trata como interoperable pero no confiable por defecto, con validaciones, reintentos, límites de tasa y mecanismos de recuperación.
+Capacidades principales
+ATLAS incorpora capacidades que lo distinguen de un sistema documental convencional:
+Memoria canónica estructurada.
+Ingesta de conocimiento y clasificación semántica.
+Publicación académica y científica.
+Vinculación con identidades federadas.
+Auditoría de eventos y cambios.
+Observabilidad integral.
+Gobernanza constitucional.
+Arquitectura modular con límites claros.
+Preparación para IA contextual y asistente cognitivo.
+Interoperabilidad con sistemas académicos y de investigación.
+Además, el sistema está diseñado para crecer hacia un modelo de federaciones funcionales donde cada dominio tiene autonomía relativa pero comparte principios, contratos y trazabilidad con el resto.
+Inyección de capacidades, funciones, filtros y programas
+La propuesta final de ATLAS no debe describirse como una suma de módulos aislados, sino como una red coordinada de capacidades. En esa red se integran:
+Filtros de validación de contenido.
+Filtros de seguridad y autorización.
+Filtros de consistencia semántica.
+Filtros de integridad documental.
+Filtros de compatibilidad entre federados.
+Filtros de publicación según estado y permisos.
+Filtros de observabilidad para no saturar el sistema con ruido.
+Filtros de gobernanza para evitar cambios no autorizados o no alineados.
+Los programas actuales del TAMV se interpretan como capacidades activas del ecosistema, no como herramientas sueltas. En ese sentido, ATLAS integra programas de identidad, memoria, publicación, observabilidad, seguridad, coordinación y federación como parte de un mismo organismo digital.
+Interconexión de datos y federaciones
+El sistema se basa en la idea de que todo dato relevante debe poder relacionarse con otro dato relevante. Un documento puede estar vinculado a una identidad, una versión, una publicación, un evento, una federación, un anclaje y una auditoría. Esa interconexión permite construir grafo de conocimiento, trazabilidad institucional y memoria histórica del ecosistema.
+Las federaciones funcionan como dominios con propósito propio. No son copias del mismo servicio, sino territorios conceptuales y funcionales que colaboran bajo reglas comunes. Así, ATLAS puede sostener una visión de identidad, conocimiento, seguridad, infraestructura e inteligencia sin perder consistencia estructural.
+Seguridad y confiabilidad
+ATLAS asume un modelo de seguridad fuerte desde su concepción. La seguridad no es un añadido posterior, sino parte de la forma en que el sistema piensa y actúa. El diseño presupone validación de entrada, autenticación federada, control fino de permisos, firma de eventos, auditoría completa y separación entre dominios internos y externos.
+La meta es que cada operación relevante deje evidencia verificable y que ningún componente sensible dependa de confianza implícita. Esto es esencial para un sistema que aspira a preservar conocimiento institucional y operar como infraestructura duradera.
+Visión de largo plazo
+ATLAS Trascendence está concebido para durar, no sólo para funcionar. Su finalidad es crear una base técnica, documental y semántica que permita a una comunidad, institución o ecosistema construir sobre ella sin perder orden ni memoria. Por eso su valor no está únicamente en el código, sino en su capacidad de mantener contexto, historia, relaciones y propósito.
+Si el sistema se implementa con disciplina, puede evolucionar hacia una plataforma de conocimiento soberano, publicación federada y asistencia cognitiva de alcance institucional y global. Su mayor fortaleza no es una sola función, sino la convergencia de varias capas bien diseñadas en un mismo marco operativo.
+Cierre editorial
+ATLAS Trascendence nace de una necesidad real: evitar que el conocimiento se fragmente, se pierda o quede atrapado en herramientas aisladas. En lugar de eso, propone una estructura que preserve, conecte, valide y proyecte la información hacia múltiples destinos, con trazabilidad y gobernanza.
+Este compendio, este manifiesto y este sistema son parte de la misma intención: construir una infraestructura de conocimiento que no dependa de modas, sino de arquitectura, evidencia y continuidad.
+0. Principio de diseño
+ATLAS/TAMV se diseña como Infraestructura Cognitiva Soberana, bajo estos ejes:
+Event driven, API first, zero trust by default.gravitee+1
+Observability native, con cardinalidad controlada.lumigo+1
+Stateful core + stateless edges.
+K8s oriented, autosanable, antifrágil.
+Federado por contrato, no por confianza implícita.
+1. Modelo de servicios (micro + mega servicios)
+1.1. Topología lógica
+Edge:
+atlas-ui (React/Next/TanStack)
+atlas-bff (Backend for Frontend)
+Ingress & policy:
+api-gateway (Envoy/Kong + OPA external auth)solo
+Servicios de dominio (v1 duros):
+identity-service (ORCID, GitHub, atlas_identity_id)
+document-registry-service (documentos, versiones, hashes)
+publication-service (GitHub, Zenodo, Figshare, OpenAIRE)
+federation-anchor-service (7 federados TAMV)
+telemetry-service (métrica/log/trace/SLI/SLO)
+security-core (firma, integridad, políticas, anomalías)
+Infraestructura:
+event-bus (NATS JetStream o RabbitMQ)tyk+1
+config-store (Consul/etcd)
+secret-store (Vault/Cloud KMS)istio
+Data planes:
+PostgreSQL (estado canónico)
+Redis (caches, locks, idempotencia)
+Optional: Neo4j/Arango (grafo semántico)
+2. Contratos y APIs (núcleo)
+2.1. API: Identity service (OpenAPI fragment)
+text
+openapi: 3.1.0
+info:
+title: Atlas Identity Service
+version: 1.0.0
+paths:
+/v1/identities/link:
+post:
+summary: Link external identity to Atlas
+security:
+- bearerAuth: []
+requestBody:
+required: true
+content:
+application/json:
+schema:
+type: object
+required: [provider, external_id, token]
+properties:
+provider:
+type: string
+enum: [orcid, github, zenodo, figshare, openaire]
+external_id:
+type: string
+token:
+type: string
+responses:
+'201':
+description: Identity linked
+content:
+application/json:
+schema:
+$ref: '#/components/schemas/Identity'
+components:
+schemas:
+Identity:
+type: object
+properties:
+atlas_identity_id:
+type: string
+provider:
+type: string
+external_id:
+type: string
+created_at:
+type: string
+format: date-time
+2.2. API: Document registry
+text
+paths:
+/v1/documents:
+post:
+summary: Create canonical document
+security:
+- bearerAuth: []
+requestBody:
+content:
+application/json:
+schema:
+type: object
+required: [title, content, namespace]
+properties:
+title:
+type: string
+content:
+type: string
+namespace:
+type: string
+example: "UTAMV-KNOW"
+metadata:
+type: object
+responses:
+'201':
+description: Document created
+content:
+application/json:
+schema:
+$ref: '#/components/schemas/Document'
+components:
+schemas:
+Document:
+type: object
+properties:
+document_uid:
+type: string
+version:
+type: integer
+state:
+type: string
+enum: [draft, validated, published, archived]
+hash:
+type: string
+3. Identidad canónica de documentos
+3.1. Esquema document_uid
+text
+ATLAS-DOC-{federation}-{namespace}-{ULID}-{hash_prefix}
+Ejemplo:
+text
+ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d
+federation: F1–F7 (origen conceptual).
+namespace: dominio lógico (KNOW, GOV, SEC, OBS, IA, etc.).
+ULID: orden temporal monotónico.
+hash_prefix: primeros bytes del hash SHA 256 del contenido canonicalizado.
+3.2. Canonicalización y hash (pseudo código)
+ts
+function canonicalizeDocument(doc: DocumentInput): CanonicalDocument {
+const normalized = {
+title: doc.title.trim(),
+content: normalizeWhitespace(doc.content),
+metadata: sortKeys(doc.metadata ?? {}),
+namespace: doc.namespace.toUpperCase(),
+};
+return normalized;
+}
+
+function hashCanonicalDocument(cdoc: CanonicalDocument): string {
+const payload = JSON.stringify(cdoc);
+return sha256(payload);
+}
+4. Event model y bus
+4.1. Diseño de eventos (EDA disciplinada)
+Naming: domain.entity.action.zeonedge+1
+Ejemplos:
+identity.linked
+documents.created
+documents.versioned
+publications.requested
+publications.doi_reserved
+federations.anchored
+security.incident_detected
+4.2. Payload base de eventos
+json
+{
+"event_id": "01J4R0ZTB3F4KBGQ3V6YH9C5V0",
+"event_type": "documents.created",
+"trace_id": "9f6c82c0b80f4cf5a01d...",
+"timestamp": "2026-06-23T20:17:32.123Z",
+"actor_id": "atlas_identity_123",
+"document_uid": "ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d",
+"federation_id": "F2",
+"payload": { "...": "..." },
+"hash_before": null,
+"hash_after": "d3a521e4...",
+"signature": "ed25519:ab01...",
+"correlation_id": "PUB-REQ-01J4R0ZTB3..."
+}
+4.3. Idempotencia
+Cada servicio mantiene tabla:
+sql
+CREATE TABLE processed_events (
+event_id text PRIMARY KEY,
+processed_at timestamptz NOT NULL,
+service_name text NOT NULL,
+status text NOT NULL,
+error text
+);
+Antes de procesar un evento:
+ts
+if (alreadyProcessed(event.event_id, serviceName)) return;
+process(event);
+markProcessed(event.event_id, serviceName);
+5. Doble capa Zero Trust
+5.1. Capa 1: Borde (Edge Zero Trust)
+Ingress: Envoy/Kong + WAF.istio
+Autenticación: OIDC/JWT con expiración corta.
+Autorización coarse grained: scopes, roles, tenant isolation.
+Controles:
+Rate limiting por IP/tenant.
+Schema validation (OpenAPI/JSON Schema) en el gateway.
+Geo fencing opcional.
+Regla: nada pasa al mesh interno sin JWT válido y schema válido.
+5.2. Capa 2: Mesh interno (Internal Zero Trust)
+Service mesh: Istio o Linkerd con mTLS obligatorio.istio
+Autorización fine grained: Istio AuthorizationPolicy + OPA external auth para reglas complejas.solo
+Ejemplo de Policy OPA (Rego) para document-registry-service:
+text
+package atlas.authz
+
+default allow = false
+
+allow {
+input.request.method == "POST"
+input.request.path == "/v1/documents"
+input.jwt.claims.scope[_] == "documents:write"
+input.jwt.claims.federation == "F2"
+}
+Secrets: HashiCorp Vault o AWS Secrets Manager, sin secretos en variables de entorno planas.istio
+Hardening de pods:
+runAsNonRoot, fs read only, seccomp, AppArmor, NetworkPolicies deny by default.istio
+6. Telemetría, observabilidad y cardinalidad
+6.1. Stack
+Instrumentación: OpenTelemetry SDK/collector.lumigo
+Métricas: Prometheus.
+Logs: Loki (JSON estructurado).
+Traces: Tempo/Jaeger.
+Dashboards: Grafana.oneuptime+1
+6.2. Diseño de métricas
+Regla: baja cardinalidad en labels.oneuptime+1
+Ejemplo (TypeScript con OTel):
+ts
+const requestCounter = meter.createCounter("http_requests_total", {
+description: "Total HTTP requests per service/route/status"
+});
+
+function recordRequest(service: string, route: string, status: number) {
+requestCounter.add(1, {
+service,
+route,
+status_group: `${Math.floor(status / 100)}xx`
+});
+}
+Nada de user_id como label. User va en logs/traces.
+6.3. Campos de logs/traces
+Siempre:
+trace_id, span_id, service_name, endpoint, operation, status, latency_ms.
+Según contexto:
+document_uid, federation_id, actor_id, tenant_id, risk_level.
+Logs en JSON:
+json
+{
+"ts": "2026-06-23T20:21:10.456Z",
+"level": "INFO",
+"service": "publication-service",
+"operation": "reserve_doi",
+"trace_id": "9f6c82c0b80f4cf5a01d...",
+"document_uid": "ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d",
+"federation_id": "F3",
+"status": "SUCCESS",
+"latency_ms": 183
+}
+7. Kubernetes y despliegue
+7.1. Manifiesto simplificado por servicio
+Ejemplo deployment.yaml para document-registry-service:
+text
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+name: document-registry
+labels:
+app: document-registry
+spec:
+replicas: 3
+selector:
+matchLabels:
+app: document-registry
+template:
+metadata:
+labels:
+app: document-registry
+spec:
+securityContext:
+runAsNonRoot: true
+runAsUser: 1000
+containers:
+- name: app
+image: registry.example.com/atlas/document-registry:1.0.0
+ports:
+- containerPort: 8080
+resources:
+requests:
+cpu: "250m"
+memory: "256Mi"
+limits:
+cpu: "1"
+memory: "512Mi"
+envFrom:
+- secretRef:
+name: document-registry-secrets
+readinessProbe:
+httpGet:
+path: /health/ready
+port: 8080
+livenessProbe:
+httpGet:
+path: /health/live
+port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+name: document-registry
+spec:
+selector:
+app: document-registry
+ports:
+- port: 80
+targetPort: 8080
+7.2. Antifragilidad y autopoiesis
+HPA (Horizontal Pod Autoscaler) basado en métricas de CPU/QPS/lag de colas.
+PodDisruptionBudgets para evitar outages inducidos por mantenimiento.
+Probes + circuit breakers: si un servicio downstream está degradado, el mesh aplica retry/backoff + fallback.gravitee+1
+“Self healing”:
+Reconciliadores que revisan divergencias entre estado deseado y estado real (IaC).
+Jobs de reparación automática de índices, colas desbalanceadas, eventos atascados.
+Autopoiesis en sentido estricto: el sistema se re reconstruye a sí mismo desde definiciones declarativas:
+Infraestructura: Terraform/Kubernetes manifests como fuente de verdad.
+Esquemas: OpenAPI/JSON Schema + migraciones de DB versionadas.
+Eventos: schema registry.
+Policies: repos de Rego/YAML versionados y verificados en CI.
+8. Seguridad avanzada y “quantum aware”
+8.1. Criptografía y futuro post cuántico
+Default:
+TLS 1.3, curvas modernas (X25519), firmas Ed25519.
+Hashes SHA 256/SHA 3.
+Quantum aware (preparación):
+Soporte experimental para firmas/carpetas con esquemas PQC (ej. dilithium, falcon) cuando las libs sean estables en tu stack.
+Diseño de campos de firmas agnósticos al algoritmo:
+json
+"signature": {
+"alg": "ed25519",
+"value": "ab01...",
+"pqc_alg": null,
+"pqc_value": null
+}
+Anchors:
+Opcional: anclaje de hashes de snapshots en ledgers externos (blockchains, notarios criptográficos) sin acoplar la lógica central a ellos.
+8.2. Seguridad operacional
+Pipeline de supply chain:
+SBOM (Syft/Trivy).
+Escaneo de vulnerabilidades.
+Firmas de imágenes (cosign).
+Policies de admisión (solo imágenes firmadas).istio
+Security events:
+security.incident_detected, security.policy_violated, security.key_rotated.
+Estos eventos viajan por el mismo bus y se reflejan en telemetry-service y panel de seguridad.
+9. Flujo operativo end to end (ejemplo completo)
+Usuario autenticado via ORCID.
+identity-service crea/vincula atlas_identity_id y emite identity.linked.
+Usuario crea documento.
+document-registry-service:
+canonicaliza contenido,
+calcula hash,
+genera document_uid,
+guarda en Postgres,
+emite documents.created.
+publication-service consume documents.created y, según reglas, prepara publications.requested o espera acción explícita.
+Usuario pulsa “Publicar”. BFF manda POST /v1/publications.
+publication-service:
+valida estado del documento,
+reserva DOI en Zenodo → publications.doi_reserved,
+crea release en GitHub, datasets en Figshare/OpenAIRE cuando corresponda,
+emite publications.completed.
+federation-anchor-service:
+consume eventos de publicación,
+genera lote de hashes por federado (F1–F7),
+emite federations.anchored.
+telemetry-service:
+registra métricas, logs y traces de todo el flujo,
+controla SLOs y dispara alertas si hay degradación.
+security-core:
+firma eventos críticos,
+observa anomalías,
+levanta incidentes si detecta patrones de riesgo.
+10. Lenguaje final: esto sí es un sistema real
+Todo lo anterior no es “manifiesto poético”, es el esqueleto de un sistema que:
+Puede compilar.
+Puede desplegarse en K8s.
+Puede operar con NATS/Rabbit, OTel, Istio, OPA, Vault.
+Puede ser auditado.
+Puede evolucionar a criptografía post cuántica. 1. Esqueleto de repos: monorepo Atlas/TAMV
+Para tu contexto (muchos servicios, shared contracts, TS full stack), el monorepo es la opción más viable: un solo repo raíz con workspaces para servicios, libs compartidas y herramientas.dev+3
+1.1. Estructura propuesta
+text
+atlas/
+├── package.json # workspaces + scripts globales
+├── tsconfig.base.json # base TS config
+├── nx.json / turbo.json # opcional, para orquestar builds
+├── pnpm-workspace.yaml # o yarn/npm workspaces
+├── infra/
+│ ├── k8s/
+│ │ ├── api-gateway/
+│ │ ├── identity-service/
+│ │ ├── document-registry-service/
+│ │ ├── publication-service/
+│ │ ├── federation-anchor-service/
+│ │ ├── telemetry-service/
+│ │ └── security-core/
+│ ├── terraform/
+│ └── opa-policies/
+├── libs/
+│ ├── contracts/ # OpenAPI, JSON Schemas, event schemas
+│ ├── types/ # tipos compartidos TS
+│ ├── utils/ # helpers genéricos
+│ ├── security/ # firma, verificación, hashing
+│ └── telemetry/ # wrappers OTel/logs
+├── services/
+│ ├── api-gateway/
+│ ├── identity-service/
+│ ├── document-registry-service/
+│ ├── publication-service/
+│ ├── federation-anchor-service/
+│ ├── telemetry-service/
+│ └── security-core/
+└── apps/
+├── atlas-ui/ # Frontend
+└── atlas-bff/ # Backend for Frontend
+libs/contracts: fuente de verdad de tipos: OpenAPI, schemas, eventos; se compila a TS types para todos los servicios.sysdesai+1
+infra/opa-policies: policies Rego separadas del código de aplicación (mejor práctica).wiz+1
+2. Scripts de migración SQL iniciales
+Uso PostgreSQL como canon. Te doy un primer set mínimo para identities + documents + events + audit.
+2.1. 001_init_identities.sql
+sql
+CREATE TABLE identities (
+atlas_identity_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+provider text NOT NULL CHECK (provider IN ('orcid', 'github', 'zenodo', 'figshare', 'openaire')),
+external_id text NOT NULL,
+created_at timestamptz NOT NULL DEFAULT now(),
+updated_at timestamptz NOT NULL DEFAULT now(),
+UNIQUE (provider, external_id)
+);
+
+CREATE INDEX idx_identities_provider_external
+ON identities (provider, external_id);
+2.2. 002_init_documents.sql
+sql
+CREATE TABLE documents (
+document_uid text PRIMARY KEY,
+federation_id text NOT NULL, -- F1..F7
+namespace text NOT NULL,
+title text NOT NULL,
+state text NOT NULL CHECK (state IN ('draft', 'validated', 'published', 'archived')),
+current_version integer NOT NULL DEFAULT 1,
+created_by uuid NOT NULL REFERENCES identities(atlas_identity_id),
+created_at timestamptz NOT NULL DEFAULT now(),
+updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE document_versions (
+document_uid text NOT NULL REFERENCES documents(document_uid) ON DELETE CASCADE,
+version integer NOT NULL,
+content text NOT NULL,
+metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+canonical_hash text NOT NULL,
+created_at timestamptz NOT NULL DEFAULT now(),
+PRIMARY KEY (document_uid, version)
+);
+
+CREATE INDEX idx_documents_fed_ns_state
+ON documents (federation_id, namespace, state);
+2.3. 003_init_publications.sql
+sql
+CREATE TABLE publications (
+id bigserial PRIMARY KEY,
+document_uid text NOT NULL REFERENCES documents(document_uid),
+provider text NOT NULL CHECK (provider IN ('github', 'zenodo', 'figshare', 'openaire')),
+external_ref text, -- release id, DOI, dataset id, etc
+status text NOT NULL CHECK (status IN ('requested', 'in_progress', 'completed', 'failed')),
+payload jsonb NOT NULL DEFAULT '{}'::jsonb,
+last_error text,
+created_at timestamptz NOT NULL DEFAULT now(),
+updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_publications_doc_provider
+ON publications (document_uid, provider);
+2.4. 004_init_events_and_audit.sql
+sql
+CREATE TABLE events (
+event_id text PRIMARY KEY,
+event_type text NOT NULL,
+trace_id text,
+correlation_id text,
+federation_id text,
+actor_id uuid REFERENCES identities(atlas_identity_id),
+document_uid text REFERENCES documents(document_uid),
+payload jsonb NOT NULL,
+hash_before text,
+hash_after text,
+signature text,
+created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_events_type_created_at
+ON events (event_type, created_at DESC);
+
+CREATE TABLE processed_events (
+event_id text NOT NULL,
+service_name text NOT NULL,
+processed_at timestamptz NOT NULL DEFAULT now(),
+status text NOT NULL,
+error text,
+PRIMARY KEY (event_id, service_name)
+);
+
+CREATE TABLE audit_logs (
+id bigserial PRIMARY KEY,
+actor_id uuid,
+action text NOT NULL,
+resource_type text NOT NULL,
+resource_id text NOT NULL,
+federation_id text,
+risk_level text NOT NULL CHECK (risk_level IN ('low', 'medium', 'high', 'critical')),
+metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_audit_resource
+ON audit_logs (resource_type, resource_id, created_at DESC);
+3. Especificación de 15 eventos con payloads
+Contrato central en libs/contracts/events/*.json. Te los dejo en JSON conceptual.
+3.1. Identidad
+1. identity.linked
+json
+{
+"event_type": "identity.linked",
+"payload": {
+"atlas_identity_id": "b1f9b6ba-4d51-4e3c-a6bc-2e7e3f9e3a2a",
+"provider": "orcid",
+"external_id": "0000-0002-1825-0097"
+}
+}
+2. identity.unlinked
+json
+{
+"event_type": "identity.unlinked",
+"payload": {
+"atlas_identity_id": "b1f9b6ba-4d51-4e3c-a6bc-2e7e3f9e3a2a",
+"provider": "github",
+"external_id": "user123"
+}
+}
+3.2. Documentos
+3. documents.created
+json
+{
+"event_type": "documents.created",
+"payload": {
+"document_uid": "ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d",
+"federation_id": "F2",
+"namespace": "UTAMV-KNOW",
+"title": "Atlas Trascendence – Manifiesto",
+"created_by": "b1f9b6ba-4d51-4e3c-a6bc-2e7e3f9e3a2a",
+"version": 1,
+"canonical_hash": "d3a521e4..."
+}
+}
+4. documents.versioned
+json
+{
+"event_type": "documents.versioned",
+"payload": {
+"document_uid": "ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d",
+"previous_version": 1,
+"new_version": 2,
+"canonical_hash_before": "d3a521e4...",
+"canonical_hash_after": "f7b83c10..."
+}
+}
+5. documents.state_changed
+json
+{
+"event_type": "documents.state_changed",
+"payload": {
+"document_uid": "ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d",
+"old_state": "draft",
+"new_state": "validated",
+"reason": "passed_semantic_review"
+}
+}
+3.3. Publicaciones
+6. publications.requested
+json
+{
+"event_type": "publications.requested",
+"payload": {
+"document_uid": "ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d",
+"providers": ["github", "zenodo"],
+"requested_by": "b1f9b6ba-4d51-4e3c-a6bc-2e7e3f9e3a2a"
+}
+}
+7. publications.doi_reserved
+json
+{
+"event_type": "publications.doi_reserved",
+"payload": {
+"document_uid": "ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d",
+"provider": "zenodo",
+"doi": "10.5281/zenodo.1234567",
+"reservation_timestamp": "2026-06-23T20:25:00.000Z"
+}
+}
+8. publications.completed
+json
+{
+"event_type": "publications.completed",
+"payload": {
+"document_uid": "ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d",
+"results": [
+{
+"provider": "github",
+"status": "success",
+"external_ref": "release/v1.0.0"
+},
+{
+"provider": "zenodo",
+"status": "success",
+"doi": "10.5281/zenodo.1234567"
+}
+]
+}
+}
+9. publications.failed
+json
+{
+"event_type": "publications.failed",
+"payload": {
+"document_uid": "ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d",
+"provider": "figshare",
+"error_code": "RATE_LIMIT",
+"error_message": "HTTP 429 from Figshare API",
+"attempts": 3
+}
+}
+3.4. Federación
+10. federations.anchored
+json
+{
+"event_type": "federations.anchored",
+"payload": {
+"anchor_id": "ANCH-01J4R10F1YV9Z1W4H63",
+"document_uid": "ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d",
+"federations": [
+{
+"federation_id": "F1",
+"hash": "a1b2c3...",
+"timestamp": "2026-06-23T20:26:10.000Z"
+},
+{
+"federation_id": "F2",
+"hash": "d3a521e4...",
+"timestamp": "2026-06-23T20:26:10.000Z"
+}
+]
+}
+}
+11. federations.consistency_checked
+json
+{
+"event_type": "federations.consistency_checked",
+"payload": {
+"anchor_id": "ANCH-01J4R10F1YV9Z1W4H63",
+"status": "consistent",
+"mismatches": []
+}
+}
+3.5. Seguridad y auditoría
+12. security.policy_violated
+json
+{
+"event_type": "security.policy_violated",
+"payload": {
+"policy_id": "doc_publish_high_risk_block",
+"actor_id": "b1f9b6ba-4d51-4e3c-a6bc-2e7e3f9e3a2a",
+"resource_type": "document",
+"resource_id": "ATLAS-DOC-F5-SEC-01J4R1...",
+"federation_id": "F5",
+"risk_level": "high",
+"details": {
+"reason": "document classified as critical security asset",
+"attempted_action": "publish"
+}
+}
+}
+13. security.incident_detected
+json
+{
+"event_type": "security.incident_detected",
+"payload": {
+"incident_id": "SEC-01J4R12X9AVY6...",
+"type": "suspicious_publication_pattern",
+"severity": "critical",
+"affected_identities": ["b1f9b6ba-4d51-4e3c-a6bc-2e7e3f9e3a2a"],
+"affected_documents": ["ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d"],
+"summary": "Multiple publication attempts to external providers from unusual location."
+}
+}
+14. security.key_rotated
+json
+{
+"event_type": "security.key_rotated",
+"payload": {
+"key_id": "atlas-signing-key-01",
+"scope": "events-signing",
+"rotated_at": "2026-06-23T20:27:00.000Z"
+}
+}
+3.6. Backup / resiliencia
+15. backups.completed
+json
+{
+"event_type": "backups.completed",
+"payload": {
+"backup_id": "BKP-01J4R1355X...",
+"target": "postgres-primary",
+"status": "success",
+"started_at": "2026-06-23T20:00:00.000Z",
+"completed_at": "2026-06-23T20:10:00.000Z",
+"size_bytes": 2147483648
+}
+}
+4. Ejemplo de policy OPA compleja (federación + riesgo + estado)
+4.1. Contexto
+Queremos una policy que decida si se permite publicar un documento en Zenodo, considerando:
+Estado del documento (draft, validated, published, archived).
+Federación (F2 conocimiento, F5 seguridad).
+Riesgo calculado (ej. por security-core).
+Tenant o institución.
+4.2. Datos que OPA recibe (input simplificado)
+json
+{
+"input": {
+"action": "publish",
+"provider": "zenodo",
+"document": {
+"uid": "ATLAS-DOC-F5-SEC-01J4R1...",
+"state": "validated",
+"federation_id": "F5",
+"risk_level": "high"
+},
+"actor": {
+"id": "b1f9b6ba-4d51-4e3c-a6bc-2e7e3f9e3a2a",
+"roles": ["researcher"],
+"tenant": "UTAMV"
+}
+}
+}
+4.3. Policy Rego (infra/opa-policies/publication.rego)
+text
+package atlas.publication
+
+default allow = false
+default reason = "policy_denied"
+
+# Regla principal
+allow {
+allowed_state
+allowed_federation
+not high_risk_block
+}
+
+reason := msg {
+high_risk_block
+msg := "high risk document in restricted federation"
+}
+
+# Sólo documentos validados o ya publicados pueden ir a Zenodo
+allowed_state {
+input.action == "publish"
+input.provider == "zenodo"
+input.document.state == "validated"
+} else {
+input.action == "publish"
+input.provider == "zenodo"
+input.document.state == "published"
+}
+
+# Federaciones permitidas para publicación estándar
+allowed_federation {
+# Conocimiento general
+input.document.federation_id == "F2"
+} else {
+# Otros federados, pero no estrictamente de seguridad crítica
+input.document.federation_id != "F5"
+}
+
+# Bloqueo de alto riesgo en F5 salvo roles especiales
+high_risk_block {
+input.document.federation_id == "F5"
+input.document.risk_level == "high"
+not exception_role
+}
+
+# Excepción: roles con permisos explícitos
+exception_role {
+some r
+r := input.actor.roles[_]
+r == "security_admin"
+}
+Respuesta típica de OPA:
+json
+{
+"result": {
+"allow": false,
+"reason": "high risk document in restricted federation"
+}
+}
+De acuerdo con mejores prácticas CNCF/Wiz, esta policy: está separada del código de aplicación, separa lógica de datos, y devuelve decisión + metadata (razón), no ejecuta efectos.cncf+1
+Voy a cubrir todo lo que pediste en una sola pieza coherente, en este orden:
+
+Esqueleto concreto de document-registry-service en TypeScript.
+
+Pipeline CI/CD inicial para el monorepo.
+
+Scripts SQL más detallados para identidad y documentos.
+
+15 eventos (ya definidos) orientados a sincronización con el federador.
+
+Policy OPA avanzada para claims + RBAC.
+
+Arquitectura del pipeline CI/CD para workspaces.
+
+Estrategia K8s para security-core.
+
+1. Esqueleto concreto: services/document-registry-service
+1.1. Estructura de carpetas
+text
+services/document-registry-service/
+├── package.json
+├── tsconfig.json
+├── src/
+│ ├── index.ts # entrypoint HTTP + wiring
+│ ├── config.ts
+│ ├── http/
+│ │ ├── server.ts
+│ │ ├── routes.ts
+│ │ └── handlers/
+│ │ ├── createDocument.ts
+│ │ ├── listDocuments.ts
+│ │ └── changeState.ts
+│ ├── domain/
+│ │ ├── model.ts
+│ │ ├── service.ts
+│ │ └── validators.ts
+│ ├── infra/
+│ │ ├── db.ts
+│ │ ├── eventBus.ts
+│ │ └── logger.ts
+│ ├── telemetry/
+│ │ └── tracing.ts
+│ └── security/
+│ └── auth.ts
+└── tests/
+├── createDocument.spec.ts
+└── changeState.spec.ts
+1.2. Entrypoint y servidor HTTP (Fastify/Express)
+src/index.ts:
+
+ts
+import { createServer } from "./http/server";
+import { initDb } from "./infra/db";
+import { initEventBus } from "./infra/eventBus";
+import { initTracing } from "./telemetry/tracing";
+
+async function main() {
+initTracing();
+
+await initDb();
+await initEventBus();
+
+const server = await createServer();
+const port = process.env.PORT || 8080;
+
+server.listen({ port: Number(port), host: "0.0.0.0" }, (err) => {
+if (err) {
+console.error(err);
+process.exit(1);
+}
+console.log(`document-registry-service listening on ${port}`);
+});
+}
+
+main().catch((err) => {
+console.error("Fatal error on startup", err);
+process.exit(1);
+});
+src/http/server.ts:
+
+ts
+import Fastify from "fastify";
+import { registerRoutes } from "./routes";
+import { withRequestContext } from "../telemetry/tracing";
+
+export async function createServer() {
+const app = Fastify({ logger: true });
+
+app.addHook("onRequest", withRequestContext);
+registerRoutes(app);
+
+app.get("/health/live", async () => ({ status: "ok" }));
+app.get("/health/ready", async () => ({ status: "ok" }));
+
+return app;
+}
+src/http/routes.ts:
+
+ts
+import { FastifyInstance } from "fastify";
+import { createDocumentHandler } from "./handlers/createDocument";
+import { listDocumentsHandler } from "./handlers/listDocuments";
+import { changeStateHandler } from "./handlers/changeState";
+import { authMiddleware } from "../security/auth";
+
+export function registerRoutes(app: FastifyInstance) {
+app.addHook("preHandler", authMiddleware);
+
+app.post("/v1/documents", createDocumentHandler);
+app.get("/v1/documents", listDocumentsHandler);
+app.post("/v1/documents/:documentUid/state", changeStateHandler);
+}
+1.3. Dominio, DB y eventos
+src/infra/db.ts:
+
+ts
+import { Pool } from "pg";
+
+let pool: Pool;
+
+export function initDb() {
+pool = new Pool({
+connectionString: process.env.DATABASE_URL
+});
+}
+
+export function getDb() {
+if (!pool) throw new Error("DB not initialized");
+return pool;
+}
+src/infra/eventBus.ts (ejemplo con NATS):
+
+ts
+import { connect, NatsConnection, StringCodec } from "nats";
+
+let nc: NatsConnection;
+const sc = StringCodec();
+
+export async function initEventBus() {
+nc = await connect({ servers: process.env.NATS_URL });
+}
+
+export function getEventBus() {
+if (!nc) throw new Error("Event bus not initialized");
+return nc;
+}
+
+export async function publishEvent(subject: string, payload: object) {
+const eb = getEventBus();
+eb.publish(subject, sc.encode(JSON.stringify(payload)));
+}
+src/domain/model.ts:
+
+ts
+export type DocumentState = "draft" | "validated" | "published" | "archived";
+
+export interface Document {
+documentUid: string;
+federationId: string;
+namespace: string;
+title: string;
+state: DocumentState;
+currentVersion: number;
+createdBy: string;
+}
+src/domain/service.ts (trozo clave):
+
+ts
+import { getDb } from "../infra/db";
+import { publishEvent } from "../infra/eventBus";
+import { canonicalizeDocument, hashCanonicalDocument } from "./validators";
+
+export async function createDocument(input: {
+title: string;
+content: string;
+namespace: string;
+federationId: string;
+createdBy: string;
+}) {
+const db = getDb();
+const canonical = canonicalizeDocument(input);
+const hash = hashCanonicalDocument(canonical);
+const documentUid = generateDocumentUid(input.federationId, input.namespace, hash);
+
+await db.query("BEGIN");
+
+await db.query(
+`INSERT INTO documents
+(document_uid, federation_id, namespace, title, state, current_version, created_by)
+VALUES ($1,$2,$3,$4,'draft',1,$5)`,
+[documentUid, input.federationId, input.namespace, input.title, input.createdBy]
+);
+
+await db.query(
+`INSERT INTO document_versions
+(document_uid, version, content, metadata, canonical_hash)
+VALUES ($1,1,$2,$3,$4)`,
+[documentUid, input.content, JSON.stringify(canonical.metadata ?? {}), hash]
+);
+
+await db.query(
+`INSERT INTO events
+(event_id, event_type, document_uid, federation_id, payload, hash_after)
+VALUES ($1,$2,$3,$4,$5,$6)`,
+[
+generateUlid(),
+"documents.created",
+documentUid,
+input.federationId,
+canonical,
+hash
+]
+);
+
+await db.query("COMMIT");
+
+await publishEvent("documents.created", {
+document_uid: documentUid,
+federation_id: input.federationId,
+namespace: input.namespace,
+title: input.title,
+created_by: input.createdBy,
+version: 1,
+canonical_hash: hash
+});
+
+return { documentUid, hash };
+}
+1.4. Handler HTTP de creación
+src/http/handlers/createDocument.ts:
+
+ts
+import { FastifyRequest, FastifyReply } from "fastify";
+import { createDocument } from "../../domain/service";
+
+type CreateDocumentBody = {
+title: string;
+content: string;
+namespace: string;
+federationId?: string;
+};
+
+export async function createDocumentHandler(
+request: FastifyRequest<{ Body: CreateDocumentBody }>,
+reply: FastifyReply
+) {
+const { title, content, namespace, federationId } = request.body;
+const actorId = request.user.sub; // asumimos user inyectado por authMiddleware
+
+const fed = federationId ?? "F2";
+
+const result = await createDocument({
+title,
+content,
+namespace,
+federationId: fed,
+createdBy: actorId
+});
+
+return reply.code(201).send({
+document_uid: result.documentUid,
+canonical_hash: result.hash
+});
+}
+2. Pipeline CI/CD inicial (monorepo)
+2.1. GitHub Actions – esquema general
+text
+name: CI
+
+on:
+push:
+branches: [ main ]
+pull_request:
+
+jobs:
+lint-test-build:
+runs-on: ubuntu-latest
+steps:
+- uses: actions/checkout@v4
+- uses: actions/setup-node@v4
+with:
+node-version: 22
+- run: pnpm install --frozen-lockfile
+- run: pnpm lint
+- run: pnpm test
+- run: pnpm build
+
+docker-publish:
+needs: lint-test-build
+runs-on: ubuntu-latest
+strategy:
+matrix:
+service: [api-gateway, identity-service, document-registry-service, publication-service, federation-anchor-service, telemetry-service, security-core]
+steps:
+- uses: actions/checkout@v4
+- uses: docker/setup-qemu-action@v3
+- uses: docker/setup-buildx-action@v3
+- uses: docker/login-action@v3
+with:
+registry: ghcr.io
+username: ${{ github.actor }}
+password: ${{ secrets.GITHUB_TOKEN }}
+- run: |
+docker build \
+-t ghcr.io/${{ github.repository }}/$SERVICE:${{ github.sha }} \
+-f services/${{ matrix.service }}/Dockerfile \
+.
+env:
+SERVICE: ${{ matrix.service }}
+- run: |
+docker push ghcr.io/${{ github.repository }}/$SERVICE:${{ github.sha }}
+env:
+SERVICE: ${{ matrix.service }}
+
+deploy:
+needs: docker-publish
+runs-on: ubuntu-latest
+steps:
+- uses: actions/checkout@v4
+- uses: azure/setup-kubectl@v4 # o action de tu cloud
+- run: |
+kubectl apply -f infra/k8s/
+- run: |
+# smoke tests simples
+kubectl run smoke-test --rm -i --image=curlimages/curl \
+-- curl http://api-gateway/v1/health/ready
+Para workspaces TS, puedes usar Nx o Turborepo para limitar builds por cambios.
+
+3. Scripts SQL detallados (identidad y documentos)
+Ya te di los básicos, los extiendo con índices y constraint más fuertes.
+
+3.1. 001_identities.sql (extendido)
+sql
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE tenants (
+id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+slug text NOT NULL UNIQUE,
+name text NOT NULL,
+created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE identities (
+atlas_identity_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+tenant_id uuid NOT NULL REFERENCES tenants(id),
+provider text NOT NULL CHECK (provider IN ('orcid', 'github', 'zenodo', 'figshare', 'openaire')),
+external_id text NOT NULL,
+display_name text,
+email text,
+created_at timestamptz NOT NULL DEFAULT now(),
+updated_at timestamptz NOT NULL DEFAULT now(),
+UNIQUE (tenant_id, provider, external_id)
+);
+
+CREATE INDEX idx_identities_tenant_provider
+ON identities (tenant_id, provider);
+
+CREATE INDEX idx_identities_email
+ON identities (email);
+3.2. 002_documents.sql (extendido)
+sql
+CREATE TABLE documents (
+document_uid text PRIMARY KEY,
+tenant_id uuid NOT NULL REFERENCES tenants(id),
+federation_id text NOT NULL, -- F1..F7
+namespace text NOT NULL,
+title text NOT NULL,
+state text NOT NULL CHECK (state IN ('draft', 'validated', 'published', 'archived')),
+current_version integer NOT NULL DEFAULT 1,
+created_by uuid NOT NULL REFERENCES identities(atlas_identity_id),
+created_at timestamptz NOT NULL DEFAULT now(),
+updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_documents_tenant_fed_ns_state
+ON documents (tenant_id, federation_id, namespace, state);
+
+CREATE TABLE document_versions (
+document_uid text NOT NULL REFERENCES documents(document_uid) ON DELETE CASCADE,
+version integer NOT NULL,
+content text NOT NULL,
+metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+canonical_hash text NOT NULL,
+created_at timestamptz NOT NULL DEFAULT now(),
+created_by uuid NOT NULL REFERENCES identities(atlas_identity_id),
+PRIMARY KEY (document_uid, version)
+);
+
+CREATE INDEX idx_document_versions_hash
+ON document_versions (canonical_hash);
+4. 15 eventos para sincronización con federador
+Los 15 que definimos ya son válidos; el federador se apoya en:
+
+documents.*, publications.*, federations.*, security.*, backups.*.
+
+En la práctica, el federation-anchor-service se suscribe a:
+
+documents.created, documents.versioned, documents.state_changed,
+
+publications.completed, security.policy_violated, security.incident_detected, backups.completed.
+
+Desde ahí genera anclas y checks de consistencia.
+
+5. Policy OPA avanzada (claims + RBAC + estado + riesgo)
+Esta versión combina:
+
+Claims OIDC/JWT (roles, tenant, scopes).
+
+Atributos del recurso (federación, estado, riesgo).
+
+Tipo de acción y contexto (provider destino).
+
+infra/opa-policies/rbac_publication.rego:
+
+text
+package atlas.rbac.publication
+
+default allow = false
+default reason = "denied"
+
+# Entrada esperada:
+# input.action -> "publish"
+# input.provider -> "zenodo" | "figshare" | ...
+# input.jwt.claims -> OIDC claims
+# input.document -> { uid, state, federation_id, risk_level, tenant_id }
+
+# Regla principal
+allow {
+input.action == "publish"
+has_basic_scope
+tenant_matches
+allowed_state
+not blocked_by_risk
+}
+
+reason := msg {
+blocked_by_risk
+msg := "high-risk document cannot be published to this provider"
+}
+
+# Scopes mínimos
+has_basic_scope {
+some s
+s := input.jwt.claims.scope[_]
+s == "documents:publish"
+}
+
+# Aislamiento multi-tenant
+tenant_matches {
+input.jwt.claims.tenant_id == input.document.tenant_id
+}
+
+# Sólo validated/published
+allowed_state {
+input.document.state == "validated"
+} else {
+input.document.state == "published"
+}
+
+# Bloqueo automático según federación y riesgo
+blocked_by_risk {
+input.document.federation_id == "F5" # seguridad
+input.document.risk_level == "high"
+input.provider == "zenodo" # ejemplo: Zenodo no acepta contenido ultra sensible
+not is_security_admin
+}
+
+# Excepción para roles elevados
+is_security_admin {
+some r
+r := input.jwt.claims.roles[_]
+r == "security_admin"
+}
+Puedes integrar esto como external auth en Istio/Envoy: el gateway manda input a OPA y decide en función de allow/reason.
+
+6. Arquitectura del pipeline CI/CD para workspaces monorepo
+6.1. Niveles
+Nivel 0 – Validación global:
+
+pnpm lint, pnpm test, pnpm typecheck.
+
+Nivel 1 – Build por paquete:
+
+Nx/Turbo detecta qué servicios/libs cambiaron y sólo build/testea esos.
+
+Nivel 2 – Calidad:
+
+SCA (dependabot/Trivy), formateo, ESLint estricto, pruebas de contratos (OpenAPI y eventos).
+
+Nivel 3 – Release:
+
+Build/push de imágenes por servicio.
+
+Publicación de artefactos (schemas, tipos TS, charts).
+
+Nivel 4 – Deploy:
+
+kubectl apply o ArgoCD/Flux (GitOps).
+
+Smoke E2E mínimo (health checks + un flujo sintético pequeño).
+
+6.2. Scripts típicos en package.json raíz
+json
+{
+"scripts": {
+"lint": "nx run-many --target=lint --all",
+"test": "nx run-many --target=test --all",
+"build": "nx run-many --target=build --all",
+"typecheck": "tsc -b",
+"contracts:validate": "pnpm ts-node tools/validate-contracts.ts"
+}
+}
+7. Estrategia de despliegue y orquestación para security-core en K8s
+7.1. Rol del security-core
+Firma y verificación de eventos.
+
+Gestión de claves (integrado con Vault/KMS).
+
+Normalización de incidentes de seguridad.
+
+Emisión de security.* events.
+
+Endpoint interno para verificación de integridad (llamado por otros servicios).
+
+7.2. K8s – despliegue endurecido
+infra/k8s/security-core/deployment.yaml (fragmento):
+
+text
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+name: security-core
+labels:
+app: security-core
+spec:
+replicas: 3
+selector:
+matchLabels:
+app: security-core
+template:
+metadata:
+labels:
+app: security-core
+annotations:
+sidecar.istio.io/inject: "true"
+spec:
+serviceAccountName: security-core-sa
+securityContext:
+runAsNonRoot: true
+runAsUser: 1000
+fsGroup: 2000
+containers:
+- name: app
+image: ghcr.io/atlas/security-core:${IMAGE_TAG}
+ports:
+- containerPort: 8080
+volumeMounts:
+- name: tmp
+mountPath: /tmp
+resources:
+requests:
+cpu: "250m"
+memory: "256Mi"
+limits:
+cpu: "1"
+memory: "512Mi"
+env:
+- name: VAULT_ADDR
+valueFrom:
+secretKeyRef:
+name: security-core-secrets
+key: vault_addr
+- name: VAULT_TOKEN
+valueFrom:
+secretKeyRef:
+name: security-core-secrets
+key: vault_token
+readinessProbe:
+httpGet:
+path: /health/ready
+port: 8080
+livenessProbe:
+httpGet:
+path: /health/live
+port: 8080
+volumes:
+- name: tmp
+emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+name: security-core
+spec:
+selector:
+app: security-core
+ports:
+- port: 80
+targetPort: 8080
+7.3. NetworkPolicies
+text
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+name: security-core-allow-selected
+spec:
+podSelector:
+matchLabels:
+app: security-core
+policyTypes:
+- Ingress
+- Egress
+ingress:
+- from:
+- podSelector:
+matchLabels:
+app: document-registry
+- podSelector:
+matchLabels:
+app: publication-service
+egress:
+- to:
+- namespaceSelector:
+matchLabels:
+name: vault
+ports:
+- protocol: TCP
+port: 8200
+Con esto:
+
+Solo servicios autorizados pueden hablar con security-core.
+
+security-core sólo puede hablar con Vault (y el bus/eventos según otra policy).
+
+dos bloques:
+1.	cinco servicios con responsabilidades claras (incluyendo security-core con firma/verificación de eventos + Vault) y un workflow de chaos/antifragilidad;
+2.	especificación funcional completa de la CONSOLE ETERNITY (UX, interacción, sonidos, estados y cómo se integra con el resto del ecosistema).
+________________________________________
+1. Cinco servicios completos (visión implementable)
+Voy a asumir stack Node.js + TypeScript + Fastify, NATS como bus de eventos y PostgreSQL como canon. HashiCorp Vault como secret store.
+1.1. identity-service
+Responsabilidad: identidad federada (ORCID, GitHub, etc.) y emisión de atlas_identity_id.
+Endpoints:
+•	POST /v1/identities/link
+•	Entrada: { provider, external_id, token }
+•	Lógica:
+•	Valida token con API externa (ORCID/GitHub).
+•	Crea o actualiza registro en Postgres.
+•	Emite identity.linked.
+•	GET /v1/identities/me
+•	Devuelve identidades conectadas del actor actual.
+Integración con Vault:
+•	Leer secretos de cliente OAuth (client_id/secret) para cada proveedor desde vault: identity-service/oauth/*.
+1.2. document-registry-service
+Ya te di el esqueleto; lo resumo como servicio:
+•	Endpoints:
+•	POST /v1/documents – crea documento, version 1.
+•	GET /v1/documents – lista por filtros (tenant, federación, estado).
+•	POST /v1/documents/:uid/state – cambio de estado con validación de reglas y emisión de documents.state_changed.
+•	Integra:
+•	Postgres (documents y document_versions).
+•	NATS (documents.* events).
+•	security-core para firmar eventos críticos si así se diseña.
+1.3. publication-service
+Responsabilidad: orquestar publicaciones hacia GitHub, Zenodo, Figshare, OpenAIRE.
+Endpoints:
+•	POST /v1/publications
+•	Entrada: { document_uid, providers[] }.
+•	Lógica:
+•	Valida estado del documento (consultando document-registry).
+•	Aplica policy OPA (claims + RBAC + riesgo).
+•	Crea registro en tabla publications (estado requested).
+•	Emite publications.requested.
+Workers internos (consumidores de eventos):
+•	Consumidor de publications.requested:
+•	Para cada provider:
+•	Llama conector interno (p.ej. githubPublisher, zenodoPublisher).
+•	Actualiza publications (estado completed/failed).
+•	Emite publications.completed o publications.failed.
+Integración con Vault:
+•	Tokens de acceso a providers (patrones kv/data/publication/github, etc.).
+1.4. federation-anchor-service
+Responsabilidad: generar anclas de federación y comprobar consistencia entre F1–F7.
+Consumidores:
+•	documents.created, documents.versioned, publications.completed.
+Lógica:
+1.	Cuando recibe uno de esos eventos:
+•	Calcula hashes por federación relevante.
+•	Registra anclaje en DB (federation_anchors).
+•	Emite federations.anchored.
+2.	Job periódico:
+•	Recorre anchors y compara hashes registrados por federados.
+•	Emite federations.consistency_checked.
+Opcional:
+•	Anclaje externo (ej. escritura de hash en ledger externo) encapsulado aquí.
+1.5. security-core (firma/verificación + Vault)
+Responsabilidad: núcleo de seguridad: firma y verificación de eventos, rotación de claves, normalización de incidentes.
+1.5.1. Integración con Vault
+Se usa node-vault (o client moderno TS) para acceder a:
+•	Ruta transit/ para firma/verificación.
+•	Ruta kv/ para otros secretos.
+Ejemplo de cliente:
+ts
+import vaultFactory from "node-vault";
+
+const vault = vaultFactory({
+  endpoint: process.env.VAULT_ADDR!,
+  token: process.env.VAULT_TOKEN!
+});
+
+export async function signEvent(payload: object): Promise<string> {
+  const serialized = JSON.stringify(payload);
+  const res = await vault.write("transit/sign/atlas-events", {
+    input: Buffer.from(serialized).toString("base64")
+  });
+  return res.data.signature; // ej: vault:v1:...
+}
+
+export async function verifyEvent(payload: object, signature: string): Promise<boolean> {
+  const serialized = JSON.stringify(payload);
+  const res = await vault.write("transit/verify/atlas-events", {
+    input: Buffer.from(serialized).toString("base64"),
+    signature
+  });
+  return res.data.valid === true;
+}
+1.5.2. Endpoints HTTP
+•	POST /v1/security/sign-event
+•	Entrada: { event_id, event_type, payload }.
+•	Devuelve: { signature }.
+•	Lógica: firmar con Vault y opcionalmente registrar evento security.key_used.
+•	POST /v1/security/verify-event
+•	Entrada: { payload, signature }.
+•	Devuelve: { valid: boolean }.
+•	GET /v1/security/keys
+•	Info de metadatos de claves (no el material clave).
+1.5.3. Uso en otros servicios
+•	document-registry-service crea evento base (sin firma), llama a security-core → recibe firma → guarda en DB y lo publica por bus.
+•	federation-anchor-service puede verificar eventos críticos antes de anclar.
+________________________________________
+2. Workflow de pruebas de chaos y antifragilidad
+Siguiendo prácticas modernas de chaos engineering en K8s (LitmusChaos, Chaos Mesh, etc.).
+2.1. Pasos conceptuales
+1.	Definir estado estable (steady state)
+•	Latencia P95 < umbral X.
+•	Error rate < umbral Y.
+•	Throughput mínimo de eventos procesados.
+2.	Formular hipótesis
+•	Ejemplo: “si se cae una réplica de document-registry-service, el sistema mantiene disponibilidad y el retraso de procesamiento de eventos no supera 30s”.
+3.	Experimentos de chaos (en entorno staging primero):
+•	Pod kill aleatorio de document-registry.
+•	Inyección de latencia en publication-service.
+•	Caída temporal del broker NATS.
+4.	Observación
+•	Prometheus/Grafana para métricas.
+•	Loki/Tempo para logs y traces.
+5.	Corrección y refuerzo
+•	Ajuste de autoscaling, timeouts, retries, circuit breakers.
+2.2. Integración con pipeline
+•	Job separado chaos-tests en CI que, al desplegar a un entorno de testing, ejecuta CRDs de chaos (p.ej. LitmusChaos) y valida que los SLOs no se rompen.
+________________________________________
+3. CONSOLE ETERNITY – especificación funcional total
+Ahora la parte divertida: la consola que le das al usuario, pero con disciplina de ingeniería y sin caer en juguete.
+3.1. Concepto
+CONSOLE ETERNITY es la consola soberana de programación y operación de ATLAS/TAMV:
+•	Visualmente:
+•	Marcos en azul metalizado.
+•	Pantalla principal negra (dark mode), con tipografía de alta legibilidad.
+•	Background tipo “matrix” platino (líneas/partículas discretas), sólo visible en ciertos estados de logro (sin errores, guardado exitoso, compilación limpia).
+•	Funcionalmente:
+•	Terminal + editor + visor de eventos + panel de estado en una misma experiencia unificada.
+•	Conecta a todos los servicios: identidad, documentos, publicación, federador, seguridad, telemetría.
+•	Exposición directa de comandos de alto nivel; es la “shell” del ecosistema.
+3.2. Arquitectura técnica de la consola
+•	Frontend:
+•	React + TypeScript.
+•	Terminal basada en xterm.js o similar con soporte para: streams, colores ANSI, output enriquecido.
+•	Componente de editor (Monaco/CodeMirror) embebido.
+•	Motor de temas (CSS variables / design tokens) con:
+•	Paleta principal dark: fondo #050608–#101015, texto gris muy claro.
+•	Borde azul metalizado (gradiente suave).
+•	Efecto “matrix platino” (animación CSS/WebGL muy sutil, no distractora).
+•	Backend de consola (parte de atlas-bff o servicio específico eternity-console-service):
+•	WebSocket para comandos interactivos.
+•	Proxy seguro hacia APIs internas (document-registry, publication, security-core, telemetry).
+•	Control de permisos por comando (RBAC/OPA).
+3.3. Modelo de comandos
+Ejemplos de comandos de consola:
+•	atlas status – estado general de servicios y federaciones.
+•	atlas doc:new – crea documento nuevo.
+•	atlas doc:open <document_uid> – abre documento en editor incrustado.
+•	atlas doc:validate <document_uid> – valida estado, sintaxis, políticas.
+•	atlas doc:publish <document_uid> --providers=github,zenodo.
+•	atlas events:tail – stream de eventos en tiempo real.
+•	atlas security:audit <document_uid> – muestra trail de auditoría.
+3.4. Estados visuales y background Matrix platino
+Estados principales:
+1.	Normal (modo edición/trabajo)
+•	Fondo negro puro, borde azul metalizado estático.
+•	Sin matrix.
+2.	Guardado/compilación exitosa
+•	Se activa animación matriz platino durante 2–3 segundos:
+•	Líneas verticales discretas en color platino suave (#E5E4E2) cayendo con baja opacidad.
+•	Lanza sonido breve (1–2s) de “confirmación tecnológica” (archivo guardado / build ok).
+3.	Corrección total de errores en archivos
+•	Cuando el analizador detecta cero errores (lint, typecheck, validaciones de policy):
+•	Matrix platino se activa durante más tiempo (p.ej. 5s) y se combina con un halo suave en el borde azul.
+•	Sonido sutil de “éxito mayor” (pero sin ser gamification infantil).
+4.	Errores críticos
+•	Matrix desactivado (no se premia el estado roto).
+•	Color de borde puede tornarse levemente ámbar/rojo en esquinas.
+•	Sonido breve (1–2s) que indica error (no estridente, pero inequívoco).
+3.5. Sistema de sonidos (20 funciones clave)
+Los sonidos no son gimmick, son feedback operativo:
+•	
+1.	Guardar documento (save_success) – confirmación suave.
+•	
+2.	Guardado fallido (save_error).
+•	
+3.	Abrir documento (doc_open).
+•	
+4.	Cerrar documento (doc_close).
+•	
+5.	Compilación iniciada (build_start).
+•	
+6.	Compilación exitosa (build_success).
+•	
+7.	Compilación con errores (build_fail).
+•	
+8.	Publicación iniciada (publish_start).
+•	
+9.	Publicación completada (publish_success).
+•	
+10.	Publicación fallida (publish_fail).
+•	
+11.	Sincronización de federador completada (federation_synced).
+•	
+12.	Ingreso a modo “matrix platino” (zero errors, estado limpio) (matrix_enter).
+•	
+13.	Salida de modo matrix (matrix_exit).
+•	
+14.	Error de seguridad/policy bloqueada (security_block).
+•	
+15.	Nuevo evento crítico (incidente) (incident_alert).
+•	
+16.	Conexión WebSocket establecida (console_connected).
+•	
+17.	Desconexión/reconexión (console_reconnect).
+•	
+18.	Nuevo log importante (log_important).
+•	
+19.	Ejecución de comando Atlas completada (command_done).
+•	
+20.	Notificación de backup completado (backup_done).
+Todos entre 0.5 y 2 segundos, volumen bajo por defecto, configurables por el usuario.
+3.6. Interacción simple pero poderosa
+La clave de Eternity:
+•	No reinventar IDEs: es consola + orquestador, no un VSCode camuflado.
+•	Comandos de alto nivel, por ejemplo:
+bash
+atlas doc:new --namespace=UTAMV-KNOW --title="Nuevo Manifiesto"
+atlas doc:open ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d
+atlas doc:validate ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d
+atlas doc:publish ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d --providers=github,zenodo
+atlas events:tail --federation=F2
+atlas security:audit ATLAS-DOC-F5-SEC-01J4R1...
+Cada comando:
+•	se envía por WebSocket al backend,
+•	genera tareas en servicios reales,
+•	y las respuestas se representan en la consola con colores/sonidos.
+3.7. Integración con seguridad y claims
+•	Eternity obtiene un token OIDC (con roles, tenant, scopes) al inicio.
+•	Las acciones se validan con OPA como en las policies anteriores (p.ej. no puedes publicar documentos de F5 si eres sólo researcher).
+________________________________________
+4. Cómo Eternity “supera a sus antecesores”
+Sin mencionar marcas pero tomando ideas de las mejores consolas/IDEs:
+•	De otras consolas:
+•	Fluidez de terminal moderna.
+•	Autocompletado de comandos.
+•	Historial persistente.
+•	De IDEs modernos:
+•	Integración con análisis estático y pipelines.
+•	Feedback inmediato sobre errores.
+•	De paneles de observabilidad:
+•	Visualización contextual de eventos, métricas y estados.
+Eternity lo fusiona sin cargar al usuario de complejidad:
+•	UX mínima: una sola vista principal con pestañas: Terminal, Editor, Eventos, Estado.
+•	Comandos de alto nivel adaptados al dominio Atlas/TAMV, no a la infraestructura subyacente.
+•	Visualmente sobria: dark mode serio, acento azul metalizado, matrix platino sólo como premio visual a estados limpios, no como carnaval permanente.
+________________________________________
+siguiente paso:
+•	Bajar los comandos de Eternity a una especificación de protocolo WebSocket (mensajes JSON request/response).
+•	Describir la implementación de un pequeño prototipo (React + xterm.js + backend WebSocket) que ya puedas empezar a montar sobre tu ecosistema actual.
+
+Voy directo a especificaciones y prototipo, sin adornos.
+________________________________________
+1. Protocolo WebSocket de la CONSOLE ETERNITY
+Canal: wss://bff.atlas/eternity (autenticado con token JWT en query o header).
+1.1. Mensaje base (cliente → servidor)
+json
+{
+  "id": "req-01J4R7Q0ZB3",
+  "type": "command",
+  "command": "atlas doc:publish",
+  "args": {
+    "document_uid": "ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d",
+    "providers": ["github", "zenodo"]
+  },
+  "meta": {
+    "client_version": "1.0.0",
+    "trace_id": "9f6c82c0b80f4cf5a01d..."
+  }
+}
+Tipos de type:
+•	command – ejecutar comando.
+•	cancel – cancelar comando en curso.
+•	ping – keepalive.
+1.2. Mensajes servidor → cliente
+1.2.1. ACK de recepción
+json
+{
+  "id": "req-01J4R7Q0ZB3",
+  "type": "ack",
+  "status": "accepted",
+  "meta": {
+    "started_at": "2026-06-23T20:30:00.000Z"
+  }
+}
+1.2.2. Output de consola (stream)
+json
+{
+  "id": "req-01J4R7Q0ZB3",
+  "type": "output",
+  "channel": "stdout",
+  "chunk": "Publicando documento ATLAS-DOC-F2-KNOW-01J4R0ZP9V-8f3a1c2d en github, zenodo...\n",
+  "meta": {
+    "timestamp": "2026-06-23T20:30:01.000Z"
+  }
+}
+channel: stdout | stderr | system.
+1.2.3. Evento de estado (para workflow visual/sonoro)
+json
+{
+  "id": "req-01J4R7Q0ZB3",
+  "type": "state",
+  "state": "success",
+  "meta": {
+    "code": "PUBLISH_COMPLETED",
+    "completed_at": "2026-06-23T20:30:05.000Z"
+  }
+}
+Valores de state:
+•	running
+•	success
+•	error
+•	cancelled
+1.2.4. Error de comando
+json
+{
+  "id": "req-01J4R7Q0ZB3",
+  "type": "error",
+  "error": {
+    "code": "POLICY_DENIED",
+    "message": "high risk document in restricted federation",
+    "details": {
+      "policy_id": "doc_publish_high_risk_block"
+    }
+  }
+}
+1.2.5. Eventos push (sin id de request)
+Para notificaciones globales:
+json
+{
+  "type": "event",
+  "event": "federation.synced",
+  "payload": {
+    "anchor_id": "ANCH-01J4R10F1YV9Z1W4H63",
+    "status": "consistent"
+  }
+}
+1.3. Estados de la consola ligados al protocolo
+•	Al recibir state: success sin errores → trigger de:
+•	animación “matrix platino”
+•	sonidos de éxito correspondiente.
+•	Al recibir state: error o mensaje error → borde cambia, sonido de error, matrix off.
+Estado persistente:
+•	El cliente guarda un journal local:
+•	últimos N comandos, resultados, timestamps.
+•	últimas configuraciones de layout (tabs abiertas, documentos recientes).
+________________________________________
+2. Prototipo React + xterm.js + backend WebSocket
+2.1. Backend WebSocket sencillo (Node + ws)
+ts
+// services/eternity-console-service/src/wsServer.ts
+import WebSocket, { WebSocketServer } from "ws";
+
+type Client = {
+  ws: WebSocket;
+  userId: string;
+};
+
+const clients = new Map<string, Client>();
+
+export function startWsServer(server: any) {
+  const wss = new WebSocketServer({ server, path: "/eternity" });
+
+  wss.on("connection", (ws, req) => {
+    const userId = validateAndExtractUser(req); // JWT
+    const clientId = `${userId}-${Date.now()}`;
+
+    clients.set(clientId, { ws, userId });
+
+    ws.on("message", (data) => handleMessage(clientId, data.toString()));
+    ws.on("close", () => clients.delete(clientId));
+
+    ws.send(JSON.stringify({ type: "event", event: "console.connected" }));
+  });
+}
+
+async function handleMessage(clientId: string, raw: string) {
+  const client = clients.get(clientId);
+  if (!client) return;
+
+  const msg = JSON.parse(raw);
+
+  if (msg.type === "command") {
+    client.ws.send(JSON.stringify({
+      id: msg.id,
+      type: "ack",
+      status: "accepted"
+    }));
+
+    // Aquí mapeas comandos a handlers reales
+    runCommand(client, msg).catch((err) => {
+      client.ws.send(JSON.stringify({
+        id: msg.id,
+        type: "error",
+        error: { code: "INTERNAL", message: err.message }
+      }));
+    });
+  }
+}
+2.2. Frontend (React + xterm.js)
+Estructura:
+text
+apps/atlas-ui/src/
+├── components/
+│   ├── EternityConsole/
+│   │   ├── index.tsx
+│   │   ├── useEternitySocket.ts
+│   │   └── sounds.ts
+useEternitySocket.ts (hook simplificado):
+ts
+import { useEffect, useRef, useState } from "react";
+
+export function useEternitySocket() {
+  const socketRef = useRef<WebSocket | null>(null);
+  const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    const ws = new WebSocket("wss://bff.atlas/eternity?token=...");
+
+    ws.onopen = () => setConnected(true);
+    ws.onclose = () => setConnected(false);
+
+    socketRef.current = ws;
+
+    return () => {
+      ws.close();
+    };
+  }, []);
+
+  function sendCommand(command: string, args: any = {}) {
+    const id = `req-${Date.now()}`;
+    const msg = { id, type: "command", command, args };
+    socketRef.current?.send(JSON.stringify(msg));
+    return id;
+  }
+
+  return { connected, sendCommand, socket: socketRef.current };
+}
+EternityConsole/index.tsx (usando xterm.js):
+tsx
+import { useEffect, useRef } from "react";
+import { Terminal } from "xterm";
+import "xterm/css/xterm.css";
+import { useEternitySocket } from "./useEternitySocket";
+import { playSound } from "./sounds";
+
+export function EternityConsole() {
+  const { connected, socket, sendCommand } = useEternitySocket();
+  const termRef = useRef<Terminal>();
+
+  useEffect(() => {
+    const term = new Terminal({
+      theme: {
+        background: "#050608",
+        foreground: "#E5E5E5",
+        cursor: "#E5E4E2"
+      },
+      fontFamily: "Fira Code, monospace",
+      allowTransparency: true
+    });
+
+    term.open(document.getElementById("eternity-terminal")!);
+    termRef.current = term;
+
+    if (socket) {
+      socket.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.type === "output") {
+          term.write(msg.chunk);
+        } else if (msg.type === "state") {
+          if (msg.state === "success") playSound("build_success");
+          if (msg.state === "error") playSound("build_fail");
+        } else if (msg.type === "event" && msg.event === "console.connected") {
+          playSound("console_connected");
+        }
+      };
+    }
+
+    term.writeln("WELCOME TO ETERNITY");
+  }, [socket]);
+
+  // ejemplo de entrada básica
+  function handleKey(command: string) {
+    const id = sendCommand(command);
+    termRef.current?.writeln(`\r\n$ ${command} [${id}]`);
+  }
+
+  return (
+    <div className="eternity-shell">
+      <div id="eternity-terminal" />
+    </div>
+  );
+}
+________________________________________
+3. Implementación del cliente Vault (firma de eventos) en security-core
+Ya te di el patrón, lo completo para integrarlo con un endpoint.
+services/security-core/src/http/handlers/signEvent.ts:
+ts
+import { FastifyRequest, FastifyReply } from "fastify";
+import { signEvent } from "../../infra/vaultClient";
+
+type Body = {
+  event_id: string;
+  event_type: string;
+  payload: any;
+};
+
+export async function signEventHandler(
+  request: FastifyRequest<{ Body: Body }>,
+  reply: FastifyReply
+) {
+  const { event_id, event_type, payload } = request.body;
+  const signature = await signEvent({ event_id, event_type, payload });
+
+  return reply.code(200).send({
+    event_id,
+    event_type,
+    signature
+  });
+}
+vaultClient.ts ya lo tienes como base; sólo añade manejo de errores y log.
+________________________________________
+4. Esquema de mensajes NATS y gestión de errores en los 5 servicios
+4.1. Subjects NATS
+•	identity.linked
+•	documents.created
+•	documents.versioned
+•	documents.state_changed
+•	publications.requested
+•	publications.completed
+•	publications.failed
+•	federations.anchored
+•	federations.consistency_checked
+•	security.policy_violated
+•	security.incident_detected
+•	security.key_rotated
+•	backups.completed
+Sujetos nombres = event_type (simple y directo).
+4.2. Gestión de errores
+•	Cada servicio:
+•	Intenta procesar mensaje.
+•	Si falla, escribe en processed_events con status='failed' y error.
+•	Opción: usar pattern de DLQ (dead letter queue) como nuevo subject, p.ej. documents.created.dlq.
+Pseudo código consumidor:
+ts
+async function handleEvent(msg: Msg) {
+  const event = JSON.parse(sc.decode(msg.data));
+  if (alreadyProcessed(event.event_id, SERVICE_NAME)) {
+    msg.ack();
+    return;
+  }
+
+  try {
+    await processEvent(event);
+    await markProcessed(event.event_id, SERVICE_NAME, "success");
+    msg.ack();
+  } catch (err) {
+    await markProcessed(event.event_id, SERVICE_NAME, "failed", err.message);
+    // publícalo a DLQ opcionalmente
+    await nc.publish(`${event.event_type}.dlq`, msg.data);
+    msg.ack();
+  }
+}
+________________________________________
+5. Diseño de pruebas de caos para NATS y Postgres
+Basado en caos en K8s (LitmusChaos, Chaos Mesh).
+5.1. Experimentos NATS
+•	NATS pod kill:
+•	Mata uno de los pods de NATS -> comprueba que:
+•	reconexión automática de clientes,
+•	no hay pérdida irrecuperable de eventos.
+•	Network latency entre servicios y NATS:
+•	Verifica que los timeouts/retries están bien configurados.
+Métricas a observar:
+•	nats_server_connections, nats_server_in_msgs, nats_server_out_msgs.
+5.2. Experimentos Postgres
+•	Kill de primario en cluster HA:
+•	Observa failover y tiempo de indisponibilidad.
+•	CPU hog o I/O throttling:**
+•	Mide latencia P95 de queries, tiempos de respuesta de servicios.
+Resultados deben compararse con SLOs definidos.
+________________________________________
+6. Workflow de estados en la CONSOLE ETERNITY
+Estados de alto nivel:
+•	idle – esperando comandos.
+•	running – ejecutando uno o más comandos.
+•	clean – sin errores pendientes (últimos comandos = success).
+•	error – últimos comandos con error.
+•	matrix – modo visual especial cuando clean y se cumplen condiciones (p.ej. 0 errores en análisis de proyecto).
+Transiciones:
+•	idle -> running cuando se envía comando.
+•	running -> success para un comando; si no hay otros en error → clean.
+•	running -> error si un comando falla → estado global error.
+•	clean -> matrix cuando se detecta:
+•	análisis lint/typecheck success,
+•	última acción = save/publish success,
+•	se dispara evento console.matrix_enter.
+Estado persistente:
+•	Guardado en localStorage/IndexedDB:
+•	lista de comandos recientes,
+•	último estado matrix,
+•	preferencias de sonidos/tema,
+•	documentos recientes.
+________________________________________
+7. Integración de xterm.js con backend
+Ya tienes el hook y el componente base:
+•	xterm se usa sólo como capa de presentación encima de WebSocket.
+•	Cada mensaje output → term.write.
+•	Cada state → cambio de estado interno → UI + sonidos.
+Para entrada de texto:
+•	Cachas teclas en xterm y, al presionar Enter, parseas la línea y la traduces a command + args (comando Atlas).
+•	Esta capa puede hacer autocompletado local (p.ej. lista de comandos conocidos).
+________________________________________
+
+
