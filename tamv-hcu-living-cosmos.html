@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TAMV Ω∞ HCU — Living Knowledge Cosmos</title>
+<style>
+:root{--bg:#000208;--panel:rgba(4,9,22,.82);--line:rgba(140,220,255,.18);--cyan:#7df9ff;--blue:#4d7cff;--violet:#c084fc;--gold:#ffe066;--green:#69ffce;--pink:#ff7ad9;--red:#ff5f7e;--text:#f4fbff;--dim:#9db4d8}
+*{box-sizing:border-box;margin:0;padding:0;user-select:none}
+html,body{height:100%;overflow:hidden}
+body{background:radial-gradient(1500px 950px at 12% 4%,#071534 0%,#000208 60%),#000208;color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+canvas{position:fixed;inset:0;display:block}
+#bg{z-index:0}#net{z-index:1}
+.ui{position:fixed;z-index:20;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:0 30px 110px rgba(0,0,0,.75),inset 0 0 45px rgba(125,249,255,.05)}
+#top{left:18px;right:18px;top:14px;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 18px}
+.brand{display:flex;gap:12px;align-items:center}
+.orb{width:28px;height:28px;border-radius:50%;border:2px solid var(--cyan);position:relative;box-shadow:0 0 26px rgba(125,249,255,.65)}
+.orb::before,.orb::after{content:"";position:absolute;border-radius:50%}
+.orb::before{width:8px;height:8px;background:#fff;top:2px;left:4px;box-shadow:0 0 14px #fff}
+.orb::after{width:7px;height:7px;background:var(--violet);bottom:2px;right:3px;animation:orb 4s linear infinite}
+@keyframes orb{to{transform:rotate(360deg)}}
+h1{font-size:16px;letter-spacing:.7px;background:linear-gradient(90deg,#fff,var(--cyan),var(--violet),#fff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tag{font-size:9px;color:var(--dim);letter-spacing:2.6px;text-transform:uppercase}
+.status{display:flex;gap:13px;align-items:center;font-family:ui-monospace,monospace;font-size:10.5px;color:var(--cyan)}
+.pulse{width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 16px #fff;animation:p 1.8s infinite}
+@keyframes p{0%,100%{opacity:.3}50%{opacity:1}}
+#left{left:18px;top:94px;width:340px;bottom:18px;padding:15px;overflow:auto}
+#right{right:18px;top:94px;width:375px;bottom:18px;padding:15px;overflow:auto;display:none}
+#bottom{left:50%;transform:translateX(-50%);bottom:16px;padding:9px;display:flex;gap:7px;flex-wrap:wrap;justify-content:center;max-width:min(1080px,96vw)}
+h2{font-size:10px;text-transform:uppercase;letter-spacing:1.8px;color:var(--cyan);margin:16px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+h2:first-of-type{margin-top:0}
+input,select{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:9px 11px;font-size:12px;outline:none}
+input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(125,249,255,.1)}
+button{background:rgba(125,249,255,.08);border:1px solid rgba(125,249,255,.25);color:var(--text);border-radius:11px;padding:7px 10px;font-size:11px;cursor:pointer;transition:.18s}
+button:hover{background:rgba(125,249,255,.2);border-color:var(--cyan)}
+button.active{background:rgba(125,249,255,.28);border-color:var(--cyan);color:#fff}
+button.danger{background:rgba(255,95,126,.1);border-color:rgba(255,95,126,.4)}
+button.danger:hover{background:rgba(255,95,126,.22);border-color:var(--red)}
+.row{display:flex;gap:7px}.row>*{flex:1}
+.card{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:11px;margin-bottom:8px;cursor:pointer;transition:.18s}
+.card:hover{border-color:var(--cyan);transform:translateY(-1px)}
+.card.active{border-color:var(--cyan);background:rgba(125,249,255,.1)}
+.card b{font-size:12.5px}
+.card small{display:block;color:var(--dim);font-size:10.5px;margin-top:3px;line-height:1.45}
+.metric{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin:6px 0 3px}
+.metric b{color:var(--text)}
+.bar{height:4px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#fff,var(--cyan),var(--violet))}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--dim);margin:2px}
+.kv{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin:6px 0}
+.kv b{color:var(--text)}
+.future{background:rgba(255,255,255,.045);border-left:3px solid var(--cyan);border-radius:9px;padding:8px;margin-bottom:6px;font-size:10.5px;color:var(--dim)}
+.future b{color:var(--text)}
+.insight{background:linear-gradient(135deg,rgba(125,249,255,.08),rgba(192,132,252,.07));border:1px solid rgba(125,249,255,.22);border-radius:12px;padding:10px;font-size:10.5px;line-height:1.5;color:var(--text)}
+#toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:9px 14px;font-size:11px;z-index:40;display:none;max-width:84vw;text-align:center}
+.hint{position:fixed;left:50%;bottom:66px;transform:translateX(-50%);color:var(--dim);font-size:10px;letter-spacing:.6px;z-index:15;pointer-events:none;text-align:center}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:rgba(140,220,255,.2);border-radius:9px}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas><canvas id="net"></canvas>
+
+<div class="ui" id="top">
+ <div class="brand"><div class="orb"></div><div>
+  <h1>TAMV Ω∞ HCU — LIVING KNOWLEDGE COSMOS</h1>
+  <div class="tag">Cognitive Transformation Cosmos Engine · Living Atoms · Quantum Flow · ISCIR Ω∞</div>
+ </div></div>
+ <div class="status"><div class="pulse"></div><span>COSMOS ACTIVE</span><span id="fps">60 FPS</span><span id="clock"></span></div>
+</div>
+
+<div class="ui" id="left">
+ <h2>Inteligencia contextual</h2>
+ <input id="search" placeholder="Explora: IA + educación + clima + riesgo…"/>
+ <div id="semantic" style="margin-top:7px"></div>
+
+ <h2>Universo hexadimensional</h2>
+ <div class="card" style="cursor:default">
+  <div class="metric"><span>X · Influencia</span><b>Activa</b></div>
+  <div class="metric"><span>Y · Riesgo</span><b>Activo</b></div>
+  <div class="metric"><span>Z · Evidencia</span><b>Activa</b></div>
+  <div class="metric"><span>T · Tiempo</span><b id="yearLabel">2026</b></div>
+  <div class="metric"><span>Q · Incertidumbre</span><b>Adaptativa</b></div>
+  <div class="metric"><span>Ω · Potencial futuro</span><b>Simulado</b></div>
+ </div>
+
+ <h2>Línea temporal</h2>
+ <input type="range" id="timeline" min="2026" max="2050" value="2026"/>
+ <div class="metric"><span>Año simulado</span><b id="yearValue">2026</b></div>
+
+ <h2>Flujo de conocimiento vivo</h2>
+ <div class="card" style="cursor:default">
+  <div class="metric"><span>Dirección global</span><b>Izquierda → Derecha</b></div>
+  <div class="metric"><span>Rotación simétrica</span><b>Coherente</b></div>
+  <div class="metric"><span>Velocidad</span><b id="speedLabel">1.0×</b></div>
+  <input type="range" id="speed" min="0" max="300" value="100"/>
+ </div>
+
+ <h2>Dominios del universo</h2>
+ <div id="domains"></div>
+
+ <h2>Constructor de átomos</h2>
+ <input id="atomName" placeholder="Nombre del Cognitive Atom"/>
+ <div style="height:7px"></div>
+ <select id="atomDomain"></select>
+ <div style="height:7px"></div>
+ <button style="width:100%" onclick="createAtom()">⚛ Crear Cognitive Pod</button>
+</div>
+
+<div class="ui" id="right">
+ <div style="display:flex;justify-content:space-between;align-items:start">
+  <div><h1 id="dTitle" style="font-size:15px">Entidad cognitiva</h1><div class="tag" id="dKind"></div></div>
+  <button onclick="closeDetail()">✕</button>
+ </div>
+ <div id="dBody"></div>
+</div>
+
+<div class="ui" id="bottom">
+ <button id="play" class="active">⏸ Pausar</button>
+ <button id="quantum" class="active">⚛ Estado cuántico</button>
+ <button id="flow" class="active">🌊 Flujo de conocimiento</button>
+ <button id="kube">☸ Kubernetes</button>
+ <button id="hyper">🕸 HyperEdges</button>
+ <button id="risk">⚠ Riesgo sistémico</button>
+ <button id="evidence">🧬 Evidencia VETRA</button>
+ <button id="future">🔮 Simular futuro</button>
+ <button id="rotate" class="active">🔄 Rotación simétrica</button>
+ <button id="reset" class="danger">↺ Reiniciar</button>
+</div>
+
+<div class="hint">Arrastra para rotar el cosmos · rueda para zoom · clic en un átomo para colapsar su estado</div>
+<div class="ui" id="toast"></div>
+
+<script>
+const net=document.getElementById("net"),ctx=net.getContext("2d");
+const bg=document.getElementById("bg"),bctx=bg.getContext("2d");
+let W,H,DPR,stars=[],nodes=[],hyper=[],flows=[],domains=[],selected=null,hover=null,running=true;
+let mode={quantum:true,flow:true,kube:false,hyper:true,risk:false,evidence:false,future:false};
+let rx=.22,ry=.42,trx=.22,tryy=.42,drag=false,last={x:0,y:0},zoom=1,tz=1,time=0,frames=0,ft=0,fps=60,year=2026;
+let globalOrbit=0,orbitSpeed=1,autoRotate=true;
+
+const domainData=[
+ {name:"IA y Cognición",color:"#7df9ff",insight:"La inteligencia artificial redefine la producción de conocimiento, la toma de decisiones y la organización del trabajo."},
+ {name:"Economía Soberana",color:"#ffe066",insight:"El valor económico se desplaza hacia activos cognitivos, datos verificables y capacidades de ejecución."},
+ {name:"Gobernanza",color:"#c084fc",insight:"La legitimidad depende de evidencia, transparencia, participación y rendición de cuentas."},
+ {name:"Clima y Biosfera",color:"#69ffce",insight:"El clima reorganiza economía, salud, seguridad y estabilidad geopolítica."},
+ {name:"Salud y Vida",color:"#ff7ad9",insight:"La salud se vuelve preventiva, personalizada y dependiente de datos, biotecnología y confianza pública."},
+ {name:"Seguridad",color:"#ff5f7e",insight:"La seguridad ya no es solo militar: es digital, informacional, biológica y cognitiva."}
+];
+
+const seed=[
+ ["IA Generativa","IA y Cognición",94,72,98,"La IA generativa transforma la creación de conocimiento, pero exige gobernanza, trazabilidad y validación de evidencia."],
+ ["Agentes Autónomos","IA y Cognición",88,86,95,"Los agentes autónomos ejecutan tareas complejas y redistribuyen capacidad cognitiva entre personas, organizaciones y sistemas."],
+ ["Memoria Ejecutiva","IA y Cognición",86,68,93,"La memoria persistente permite continuidad contextual, aprendizaje institucional y decisiones más coherentes."],
+ ["Razonamiento Neuro-Simbólico","IA y Cognición",91,74,96,"La fusión de redes neuronales, lógica y grafos mejora explicabilidad, verificación y razonamiento complejo."],
+ ["Mercados de IA","Economía Soberana",87,79,92,"Los mercados de capacidades cognitivas convierten skills, agentes y datos en activos económicos licenciables."],
+ ["Economía Digital","Economía Soberana",91,74,94,"La economía digital reorganiza producción, distribución y captura de valor mediante plataformas e infraestructura digital."],
+ ["Finanzas Sostenibles","Economía Soberana",83,68,90,"El capital se alinea con riesgo climático, impacto social y resiliencia de largo plazo."],
+ ["Créditos ISA","Economía Soberana",78,62,88,"Los créditos cognitivos permiten microtransacciones, acceso progresivo y liquidez dentro de ecosistemas digitales."],
+ ["Gobernanza Global","Gobernanza",89,84,95,"La gobernanza global coordina Estados, empresas, ciencia y sociedad frente a riesgos transnacionales."],
+ ["Integridad Científica","Gobernanza",95,72,98,"La integridad científica sostiene la confianza pública mediante reproducibilidad, transparencia y revisión independiente."],
+ ["Democracia Digital","Gobernanza",81,76,91,"La democracia digital enfrenta desinformación, concentración de poder y nuevas formas de participación ciudadana."],
+ ["VETRA Governance","Gobernanza",97,64,99,"VETRA integra evidencia, seguridad, ética y gobernanza en una certificación integral de confianza."],
+ ["Cambio Climático","Clima y Biosfera",97,95,99,"El cambio climático es una fuerza sistémica que reconfigura economía, salud, migración y seguridad global."],
+ ["Transición Energética","Clima y Biosfera",92,86,96,"La transición energética sustituye sistemas fósiles por arquitecturas limpias, distribuidas y resilientes."],
+ ["Biodiversidad","Clima y Biosfera",88,81,94,"La biodiversidad sostiene la estabilidad ecológica, alimentaria y climática del planeta."],
+ ["Economía Circular","Clima y Biosfera",84,66,92,"La economía circular reduce residuos, presión material y dependencia de recursos finitos."],
+ ["Salud Global","Salud y Vida",90,83,95,"La salud global depende de equidad, vigilancia, prevención y cooperación científica internacional."],
+ ["Salud Mental","Salud y Vida",85,71,92,"La salud mental se vuelve un determinante central de productividad, cohesión social y resiliencia."],
+ ["Biotecnología","Salud y Vida",89,77,94,"La biotecnología transforma medicina, alimentos y bioeconomía, pero exige gobernanza ética rigurosa."],
+ ["Medicina Preventiva","Salud y Vida",86,69,93,"La medicina preventiva desplaza el foco del tratamiento hacia detección temprana y resiliencia."],
+ ["Ciberseguridad","Seguridad",96,91,98,"La ciberseguridad protege identidades, infraestructura crítica, datos y confianza digital."],
+ ["Ciberdelito","Seguridad",93,94,90,"El ciberdelito evoluciona como amenaza transnacional, automatizada y adaptativa."],
+ ["Guerra Híbrida","Seguridad",90,88,89,"La guerra híbrida combina presión ciber, informativa, económica y geopolítica sobre sociedades."],
+ ["Soberanía Digital","Seguridad",92,79,96,"La soberanía digital determina quién controla datos, identidad, infraestructura y decisiones algorítmicas."]
+];
+
+const hyperSeeds=[
+ {sources:["IA Generativa","Agentes Autónomos","Mercados de IA"],targets:["Gobernanza Global","Economía Digital","Ciberseguridad"],label:"Transformación cognitiva-económica"},
+ {sources:["Cambio Climático","Transición Energética"],targets:["Salud Global","Economía Digital","Seguridad"],label:"Resiliencia planetaria"},
+ {sources:["Ciberseguridad","Ciberdelito","Guerra Híbrida"],targets:["Democracia Digital","Soberanía Digital","Gobernanza Global"],label:"Estabilidad digital"},
+ {sources:["Integridad Científica","VETRA Governance"],targets:["IA Generativa","Salud Global","Mercados de IA"],label:"Confianza verificable"},
+ {sources:["Salud Mental","Memoria Ejecutiva","Biotecnología"],targets:["Salud Global","Economía Digital","Gobernanza Global"],label:"Cognición humana aumentada"}
+];
+
+const semantic={
+ "ia":["agentes","memoria","razonamiento","educación","trabajo","economía"],
+ "educación":["ia","aprendizaje","investigación","trabajo","salud mental"],
+ "clima":["energía","biodiversidad","salud","economía circular","riesgo"],
+ "riesgo":["ciberseguridad","guerra híbrida","gobernanza","evidencia","resiliencia"],
+ "economía":["mercados","créditos","finanzas","gobernanza","ia"],
+ "salud":["biotecnología","prevención","clima","memoria","bienestar"]
+};
+
+function resize(){
+ DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+ [net,bg].forEach(c=>{c.width=W*DPR;c.height=H*DPR;c.style.width=W+"px";c.style.height=H+"px";});
+ ctx.setTransform(DPR,0,0,DPR,0,0);bctx.setTransform(DPR,0,0,DPR,0,0);
+ stars=Array.from({length:320},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+.2,a:Math.random()*.8+.15,s:Math.random()*.18+.03}));
+}
+addEventListener("resize",resize);resize();
+
+function init(){
+ nodes=[];hyper=[];flows=[];domains=[];
+ nodes.push({id:"core",name:"Ω CORE",domain:"Núcleo",kind:"core",impact:100,risk:38,evidence:100,trust:99,color:"#ffffff",insight:"El Ω Core sincroniza conocimiento, evidencia, agentes, memoria y gobernanza en un único campo cognitivo.",desc:"Núcleo cuántico de orquestación, validación, predicción y gobernanza del universo cognitivo.",x:0,y:0,z:0,r:24,base:24,phase:0,pod:{cpu:46,memory:63,status:"Running"},iscir:"Ω7"});
+ domainData.forEach((d,i)=>{
+  domains.push({...d,index:i});
+  const phi=Math.acos(-1+(2*i+1)/domainData.length),theta=Math.sqrt(domainData.length*Math.PI)*phi,R=240;
+  const x=R*Math.sin(phi)*Math.cos(theta),y=R*Math.sin(phi)*Math.sin(theta),z=R*Math.cos(phi);
+  nodes.push({id:"domain:"+d.name,name:d.name,domain:d.name,kind:"domain",impact:92,risk:68,evidence:95,trust:96,color:d.color,insight:d.insight,desc:`Dominio cognitivo ${d.name}, organizado en orbital ${d.orbital}.`,x,y,z,r:14,base:14,phase:Math.random()*7,pod:{cpu:38+Math.random()*40,memory:42+Math.random()*40,status:"Running"},iscir:"Ω6",orbital:d.orbital});
+  hyper.push({sources:[0],targets:[nodes.length-1],label:"Core Synchronization",color:d.color});
+ });
+ seed.forEach((s,i)=>{
+  const d=domainData.find(x=>x.name===s[1]),parent=nodes.find(n=>n.id==="domain:"+s[1]);
+  const phaseOffset=(i/seed.length)*Math.PI*2,a=phaseOffset,sr=86;
+  nodes.push({id:s[0],name:s[0],domain:s[1],kind:"atom",impact:s[2],risk:s[3],evidence:s[4],trust:80+s[4]*.18,color:d.color,insight:s[5],desc:`Átomo cognitivo del dominio ${s[1]}.`,x:parent.x+Math.cos(a)*sr,y:parent.y+Math.sin(a)*sr,z:parent.z+Math.sin(a)*22,r:7.5,base:7.5,phase:Math.random()*7,phaseOffset,pod:{cpu:18+Math.random()*70,memory:18+Math.random()*70,status:"Running"},iscir:s[4]>94?"Ω7":"Ω6",orbital:d.orbital});
+  hyper.push({sources:[nodes.findIndex(n=>n.id==="domain:"+s[1])],targets:[nodes.length-1],label:"Orbital Binding",color:d.color});
+ });
+ const find=n=>nodes.findIndex(x=>x.name===n);
+ hyperSeeds.forEach(h=>{
+  const s=h.sources.map(find).filter(i=>i>=0),t=h.targets.map(find).filter(i=>i>=0);
+  if(s.length&&t.length)hyper.push({sources:s,targets:t,label:h.label,color:"#7df9ff",hyper:true});
+ });
+ // flujo de conocimiento vivo
+ for(let i=0;i<260;i++){
+  const h=hyper[Math.floor(Math.random()*hyper.length)];
+  flows.push({h,t:Math.random(),speed:.004+Math.random()*.008});
+ }
+ buildUI();
+}
+
+function buildUI(){
+ const dBox=document.getElementById("domains");dBox.innerHTML="";
+ const aBox=document.getElementById("atomDomain");aBox.innerHTML="";
+ domains.forEach(d=>{
+  const c=document.createElement("div");c.className="card";
+  c.innerHTML=`<b>${d.name}</b><small>${d.insight}</small>
+  <div class="metric"><span>Átomos</span><b>${nodes.filter(n=>n.domain===d.name&&n.kind==="atom").length}</b></div>
+  <div class="bar"><i style="width:${92-d.index*3}%;background:${d.color}"></i></div>`;
+  c.onclick=()=>focusDomain(d.name);
+  dBox.appendChild(c);
+  const o=document.createElement("option");o.value=d.name;o.textContent=d.name;aBox.appendChild(o);
+ });
+ renderSearch();
+}
+
+function renderSearch(){
+ const q=document.getElementById("search").value.toLowerCase(),box=document.getElementById("semantic");box.innerHTML="";
+ if(!q)return;
+ let terms=new Set();
+ Object.entries(semantic).forEach(([k,v])=>{if(q.includes(k)||k.includes(q))v.forEach(t=>terms.add(t));});
+ if(!terms.size)terms=new Set(["evidencia","gobernanza","riesgo","impacto"]);
+ box.innerHTML='<div class="insight"><b>Expansión semántica VETRA</b><br/>'+[...terms].join(" · ")+'</div>';
+}
+document.getElementById("search").oninput=renderSearch;
+document.getElementById("timeline").oninput=e=>{year=+e.target.value;document.getElementById("yearValue").textContent=year;document.getElementById("yearLabel").textContent=year;toast(`🔮 Universo proyectado al año ${year}.`);};
+document.getElementById("speed").oninput=e=>{orbitSpeed=+e.target.value/100;document.getElementById("speedLabel").textContent=orbitSpeed.toFixed(1)+"×";};
+
+function focusDomain(name){const n=nodes.find(x=>x.name===name&&x.kind==="domain");if(n){tryy=-Math.atan2(n.x,n.z);trx=.18;showDetail(n);}}
+
+function createAtom(){
+ const name=document.getElementById("atomName").value.trim()||"Cognitive Atom "+(nodes.length+1);
+ const domain=document.getElementById("atomDomain").value;
+ const d=domainData.find(x=>x.name===domain),parent=nodes.find(n=>n.id==="domain:"+domain);
+ const impact=60+Math.floor(Math.random()*36),risk=35+Math.floor(Math.random()*55),evidence=75+Math.floor(Math.random()*24);
+ const phaseOffset=globalOrbit+Math.random()*Math.PI*2;
+ nodes.push({id:name+Date.now(),name,domain,kind:"atom",impact,risk,evidence,trust:78+evidence*.2,color:d.color,insight:"Nuevo átomo cognitivo: su valor depende de evidencia, gobernanza y conexiones sistémicas.",desc:"Átomo cognitivo creado dinámicamente dentro del universo TAMV Ω∞ HCU.",x:parent.x,y:parent.y,z:parent.z,r:7,base:7,phase:Math.random()*7,phaseOffset,pod:{cpu:20+Math.random()*60,memory:20+Math.random()*60,status:"Running"},iscir:evidence>93?"Ω7":"Ω6",orbital:d.orbital});
+ hyper.push({sources:[nodes.findIndex(n=>n.id===parent.id)],targets:[nodes.length-1],label:"Dynamic Orbital Binding",color:d.color});
+ for(let i=0;i<8;i++)flows.push({h:hyper[hyper.length-1],t:Math.random(),speed:.005+Math.random()*.007});
+ buildUI();toast(`⚛ Cognitive Pod “${name}” creado y sincronizado con el Ω Core.`);
+ document.getElementById("atomName").value="";
+}
+
+function showDetail(n){
+ selected=nodes.indexOf(n);
+ document.getElementById("right").style.display="block";
+ document.getElementById("dTitle").textContent=n.name;
+ document.getElementById("dKind").textContent=(n.kind==="core"?"Ω Core":n.kind==="domain"?"Dominio cognitivo":"Cognitive Quantum Atom")+" · "+n.domain;
+ const hyperCount=hyper.filter(h=>h.sources.includes(selected)||h.targets.includes(selected)).length;
+ const futures=[{y:year+2,p:Math.max(12,Math.round(n.impact*.72)),t:"Expansión controlada"},{y:year+6,p:Math.max(8,Math.round(n.impact*.22)),t:"Transformación estructural"},{y:year+12,p:Math.max(4,Math.round(n.impact*.08)),t:"Mutación sistémica"}];
+ document.getElementById("dBody").innerHTML=`
+  <div class="insight"><b>Inteligencia contextual</b><br/>${n.insight}</div>
+  <h2>Estado hexadimensional</h2>
+  <div class="kv"><span>X · Influencia</span><b>${n.impact}</b></div>
+  <div class="bar"><i style="width:${n.impact}%"></i></div>
+  <div class="kv" style="margin-top:9px"><span>Y · Riesgo</span><b>${n.risk}</b></div>
+  <div class="bar"><i style="width:${n.risk}%;background:linear-gradient(90deg,var(--gold),var(--red))"></i></div>
+  <div class="kv" style="margin-top:9px"><span>Z · Evidencia</span><b>${n.evidence}</b></div>
+  <div class="bar"><i style="width:${n.evidence}%;background:linear-gradient(90deg,var(--green),var(--cyan))"></i></div>
+  <div class="kv" style="margin-top:9px"><span>T · Tiempo</span><b>${year}</b></div>
+  <div class="kv"><span>Q · Incertidumbre</span><b>${(100-n.evidence*.7).toFixed(1)}%</b></div>
+  <div class="kv"><span>Ω · Potencial futuro</span><b>${Math.min(100,n.impact+n.evidence*.2).toFixed(0)}</b></div>
+  <h2>Estado cuántico</h2>
+  <div class="kv"><span>Coherencia</span><b>${(68+n.evidence*.28).toFixed(1)}%</b></div>
+  <div class="kv"><span>Entrelazamiento</span><b>${hyperCount} hyperedges</b></div>
+  <div class="kv"><span>Fase ψ</span><b>${n.phase.toFixed(2)} rad</b></div>
+  <div class="kv"><span>Orbital</span><b>${n.orbital||"Core"}</b></div>
+  <h2>Cognitive Pod</h2>
+  <div class="kv"><span>Estado</span><b>${n.pod.status}</b></div>
+  <div class="kv"><span>CPU cognitiva</span><b>${n.pod.cpu.toFixed(0)}%</b></div>
+  <div class="bar"><i style="width:${n.pod.cpu}%"></i></div>
+  <div class="kv" style="margin-top:8px"><span>Memoria</span><b>${n.pod.memory.toFixed(0)}%</b></div>
+  <div class="bar"><i style="width:${n.pod.memory}%;background:linear-gradient(90deg,var(--violet),var(--cyan))"></i></div>
+  <h2>ISCIR Ω∞</h2>
+  <div><span class="chip">🛡 Trust ${(n.trust/100).toFixed(2)}</span><span class="chip">🧬 Evidence ${(n.evidence/100).toFixed(2)}</span><span class="chip">⚖ Governance 0.96</span><span class="chip">🏅 ${n.iscir}</span></div>
+  <h2>Simulación de futuros</h2>
+  ${futures.map(f=>`<div class="future"><b>${f.y} · ${f.t}</b><br/>Probabilidad: ${f.p}%</div>`).join("")}
+  <h2>Acciones</h2>
+  <div class="row"><button onclick="propagate(${selected})">⚡ Propagar</button><button onclick="trace(${selected})">🧬 Trazar</button></div>
+  <div style="height:7px"></div>
+  <button style="width:100%" class="danger" onclick="quarantine(${selected})">🛡 Cuarentena VETRA</button>`;
+}
+function closeDetail(){document.getElementById("right").style.display="none";selected=null;}
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";clearTimeout(t._t);t._t=setTimeout(()=>t.style.display="none",2800);}
+function propagate(i){const n=nodes[i];n.pod.cpu=Math.min(99,n.pod.cpu+25);n.pod.status="Accelerated";hyper.filter(h=>h.sources.includes(i)||h.targets.includes(i)).forEach(h=>{[...h.sources,...h.targets].forEach(j=>{if(j!==i){nodes[j].pod.cpu=Math.min(99,nodes[j].pod.cpu+10);nodes[j].pod.memory=Math.min(99,nodes[j].pod.memory+7);}});});toast(`⚡ Conocimiento vivo propagado desde “${n.name}” mediante hyperedges.`);if(selected===i)showDetail(n);}
+function trace(i){toast(`🧬 VETRA Evidence Root emitido para “${nodes[i].name}”: SHA3-512 · BookPI · firma soberana.`);}
+function quarantine(i){const n=nodes[i];n.pod.status="Quarantined";n.pod.cpu=8;n.pod.memory=12;toast(`🛡 “${n.name}” puesto en cuarentena VETRA.`);if(selected===i)showDetail(n);}
+
+document.getElementById("play").onclick=e=>{running=!running;e.target.textContent=running?"⏸ Pausar":"▶ Reproducir";e.target.classList.toggle("active",running);};
+document.getElementById("quantum").onclick=e=>{mode.quantum=!mode.quantum;e.target.classList.toggle("active",mode.quantum);};
+document.getElementById("flow").onclick=e=>{mode.flow=!mode.flow;e.target.classList.toggle("active",mode.flow);};
+document.getElementById("kube").onclick=e=>{mode.kube=!mode.kube;e.target.classList.toggle("active",mode.kube);};
+document.getElementById("hyper").onclick=e=>{mode.hyper=!mode.hyper;e.target.classList.toggle("active",mode.hyper);};
+document.getElementById("risk").onclick=e=>{mode.risk=!mode.risk;e.target.classList.toggle("active",mode.risk);};
+document.getElementById("evidence").onclick=e=>{mode.evidence=!mode.evidence;e.target.classList.toggle("active",mode.evidence);};
+document.getElementById("future").onclick=()=>{const y=Math.min(2050,year+4);document.getElementById("timeline").value=y;document.getElementById("timeline").dispatchEvent(new Event("input"));};
+document.getElementById("rotate").onclick=e=>{autoRotate=!autoRotate;e.target.classList.toggle("active",autoRotate);toast(autoRotate?"🔄 Rotación simétrica activada: el universo gira como una sola entidad.":"⏸ Rotación simétrica pausada.");};
+document.getElementById("reset").onclick=()=>{init();closeDetail();toast("↺ Universo cognitivo reiniciado.");};
+
+net.addEventListener("wheel",e=>{e.preventDefault();tz=Math.min(2.8,Math.max(.4,tz*(e.deltaY<0?1.09:.92)));},{passive:false});
+net.addEventListener("mousedown",e=>{drag=true;last={x:e.clientX,y:e.clientY};});
+addEventListener("mouseup",()=>drag=false);
+addEventListener("mousemove",e=>{
+ if(drag){tryy+=(e.clientX-last.x)*.005;trx+=(e.clientY-last.y)*.005;last={x:e.clientX,y:e.clientY};return;}
+ const mx=e.clientX-W/2,my=e.clientY-H/2;hover=null;
+ nodes.forEach(n=>{if(n.sx&&Math.hypot(n.sx-W/2-mx,n.sy-H/2-my)<Math.max(16,n.sr))hover=n;});
+ net.style.cursor=hover?"pointer":"grab";
+});
+net.addEventListener("click",()=>{if(!hover)return;showDetail(hover);hover.pod.cpu=Math.min(99,hover.pod.cpu+18);toast(`⚛ Estado colapsado: “${hover.name}” sincronizado con el Ω Core.`);});
+
+function physics(){
+ if(autoRotate&&!drag)globalOrbit+=.0032*orbitSpeed*(mode.quantum?1.7:1);
+ nodes.forEach(n=>{
+  if(n.kind==="atom"){
+   const p=nodes.find(x=>x.id==="domain:"+n.domain);
+   n.phase+=.014*(mode.quantum?1.5:.6);
+   const a=globalOrbit+n.phaseOffset,r=88+Math.sin(n.phase*.7)*9;
+   n.x=p.x+Math.cos(a)*r;n.y=p.y+Math.sin(a)*r;n.z=p.z+Math.sin(a)*24;
+  }
+  n.phase+=.014*(mode.quantum?1.5:.6);
+  if(n.kind!=="atom")n.r=n.base+Math.sin(n.phase)*1.8;
+  n.pod.cpu=Math.max(8,Math.min(99,n.pod.cpu+(Math.random()-.5)*4));
+  n.pod.memory=Math.max(8,Math.min(99,n.pod.memory+(Math.random()-.5)*3));
+ });
+ hyper.forEach(h=>{
+  if(h.hyper)return;
+  const a=nodes[h.sources[0]],b=nodes[h.targets[0]];
+  if(!a||!b||a.kind==="atom"||b.kind==="atom")return;
+  const dx=b.x-a.x,dy=b.y-a.y,dz=b.z-a.z,d=Math.max(1,Math.hypot(dx,dy,dz)),f=(d-260)*.0003;
+  a.x+=dx/d*f;a.y+=dy/d*f;a.z+=dz/d*f;b.x-=dx/d*f;b.y-=dy/d*f;b.z-=dz/d*f;
+ });
+ if(mode.flow)flows.forEach(f=>{f.t+=f.speed*orbitSpeed;if(f.t>1)f.t=0;});
+}
+
+function drawBG(){
+ bctx.clearRect(0,0,W,H);
+ stars.forEach(s=>{s.y-=s.s;if(s.y<0)s.y=H;bctx.globalAlpha=s.a*(.5+.5*Math.sin(time*.02+s.x));bctx.fillStyle="#eaf6ff";bctx.beginPath();bctx.arc(s.x,s.y,s.r,0,7);bctx.fill();});bctx.globalAlpha=1;
+}
+function project(n){
+ const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx);
+ const x1=n.x*cy-n.z*sy,z1=n.z*cy+n.x*sy,y2=n.y*cx-z1*sx,z2=z1*cx+n.y*sx;
+ const fov=580,p=fov/(fov+z2);
+ n.sx=W/2+x1*p*zoom;n.sy=H/2+y2*p*zoom;n.sz=z2;n.sr=Math.max(1,n.r*p*zoom);n.scale=p;
+}
+function edgePoint(h,t){
+ const sources=h.sources.map(i=>nodes[i]),targets=h.targets.map(i=>nodes[i]);
+ const a=sources[Math.floor(t*sources.length)%sources.length],b=targets[Math.floor(t*targets.length)%targets.length];
+ if(!a||!b)return null;
+ const mx=(a.sx+b.sx)/2+Math.sin(time*.012+a.sx)*24,my=(a.sy+b.sy)/2+Math.cos(time*.014+b.sy)*24;
+ const u=t;
+ return {x:(1-u)*(1-u)*a.sx+2*(1-u)*u*mx+u*u*b.sx,y:(1-u)*(1-u)*a.sy+2*(1-u)*u*my+u*u*b.sy};
+}
+function draw(){
+ ctx.clearRect(0,0,W,H);
+ rx+=(trx-rx)*.08;ry+=(tryy-ry)*.08;zoom+=(tz-zoom)*.1;
+ nodes.forEach(project);
+
+ hyper.forEach(h=>{
+  const sources=h.sources.map(i=>nodes[i]),targets=h.targets.map(i=>nodes[i]);
+  if(!sources.length||!targets.length)return;
+  ctx.strokeStyle=h.color;ctx.globalAlpha=h.hyper?.2:.34+.22*Math.sin(time*.03+h.sources[0]);
+  ctx.lineWidth=h.hyper?2:.95;
+  sources.forEach(a=>targets.forEach(b=>{
+   if(a.sz<-460||b.sz<-460)return;
+   ctx.beginPath();ctx.moveTo(a.sx,a.sy);
+   const mx=(a.sx+b.sx)/2+Math.sin(time*.012+a.sx)*26,my=(a.sy+b.sy)/2+Math.cos(time*.014+b.sy)*26;
+   ctx.quadraticCurveTo(mx,my,b.sx,b.sy);ctx.stroke();
+  }));
+ });
+ ctx.globalAlpha=1;
+
+ if(mode.flow){
+  flows.forEach(f=>{
+   const p=edgePoint(f.h,f.t);if(!p)return;
+   const r=1.2+Math.sin(time*.2+f.t*20)*.5;
+   const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*5);
+   g.addColorStop(0,"#ffffff");g.addColorStop(.3,"#7df9ffcc");g.addColorStop(1,"transparent");
+   ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,r*5,0,7);ctx.fill();
+   ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(p.x,p.y,r,0,7);ctx.fill();
+  });
+ }
+
+ [...nodes].sort((a,b)=>b.sz-a.sz).forEach(n=>{
+  if(n.sz<-460)return;
+  const r=n.sr;
+  const glow=ctx.createRadialGradient(n.sx,n.sy,0,n.sx,n.sy,r*5);
+  glow.addColorStop(0,"#ffffff");glow.addColorStop(.14,n.color+"ee");glow.addColorStop(.3,n.color+"44");glow.addColorStop(1,"transparent");
+  ctx.fillStyle=glow;ctx.beginPath();ctx.arc(n.sx,n.sy,r*5,0,7);ctx.fill();
+
+  if(mode.quantum&&n.kind!=="atom"){
+   for(let k=0;k<4;k++){
+    const rr=r*(1.7+k*.72),tilt=n.phase+k*.7;
+    ctx.strokeStyle=k%2?"#ffffff55":n.color+"88";ctx.lineWidth=.9;
+    ctx.beginPath();ctx.ellipse(n.sx,n.sy,rr,rr*.42,tilt,0,7);ctx.stroke();
+    const px=n.sx+Math.cos(time*.03+k)*rr,py=n.sy+Math.sin(time*.03+k)*rr*.42;
+    ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(px,py,1.4,0,7);ctx.fill();
+   }
+  }
+  if(mode.kube){ctx.strokeStyle=n.color;ctx.lineWidth=1;ctx.strokeRect(n.sx-r,n.sy-r,r*2,r*2);ctx.fillStyle=n.color+"22";ctx.fillRect(n.sx-r,n.sy-r,r*2,r*2);}
+  if(mode.evidence){ctx.strokeStyle="#69ffce";ctx.lineWidth=.9;ctx.beginPath();ctx.arc(n.sx,n.sy,r+9+Math.sin(time*.05+n.phase)*2.5,0,7);ctx.stroke();}
+  if(mode.risk&&n.risk>85){ctx.strokeStyle="#ff5f7e";ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(n.sx,n.sy,r+15+Math.sin(time*.12)*2.5,0,7);ctx.stroke();}
+
+  const core=ctx.createRadialGradient(n.sx-r*.25,n.sy-r*.25,0,n.sx,n.sy,r);
+  core.addColorStop(0,"#ffffff");core.addColorStop(.35,n.color);core.addColorStop(1,"#020617");
+  ctx.fillStyle=core;ctx.beginPath();ctx.arc(n.sx,n.sy,r,0,7);ctx.fill();
+  ctx.strokeStyle=selected===nodes.indexOf(n)?"#fff":hover===n?"#ffffffcc":n.color+"99";
+  ctx.lineWidth=selected===nodes.indexOf(n)?2.4:1.2;
+  ctx.beginPath();ctx.arc(n.sx,n.sy,r,0,7);ctx.stroke();
+
+  if(n.scale>.6&&n.kind!=="atom"){
+   ctx.fillStyle="#f4fbff";ctx.textAlign="left";ctx.font=`700 ${Math.max(9,Math.floor(11*n.scale))}px Inter,system-ui`;
+   ctx.fillText(n.name,n.sx+r+9,n.sy+3);
+   ctx.fillStyle="rgba(157,180,216,.9)";ctx.font=`400 ${Math.max(8,Math.floor(8*n.scale))}px ui-monospace,monospace`;
+   ctx.fillText(`|ψ⟩ ${n.pod.status} · ${n.pod.cpu.toFixed(0)}% · ${n.iscir}`,n.sx+r+9,n.sy+16);
+  }
+ });
+}
+function loop(ts){
+ frames++;
+ if(ts>ft+1000){fps=Math.round(frames*1000/(ts-ft));document.getElementById("fps").textContent=fps+" FPS";frames=0;ft=ts;}
+ document.getElementById("clock").textContent=new Date().toLocaleTimeString();
+ if(running){time++;physics();}
+ drawBG();draw();requestAnimationFrame(loop);
+}
+init();requestAnimationFrame(loop);
+toast("🌊 TAMV Ω∞ HCU activo: conocimiento vivo fluyendo entre átomos cognitivos.");
+</script>
+</body>
+</html>

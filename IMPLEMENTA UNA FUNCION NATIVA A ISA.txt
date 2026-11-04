@@ -1,0 +1,2841 @@
+IMPLEMENTA UNA FUNCION NATIVA A ISABELLA QUE SUPERE ESTO CON CRECES PARA QUE SEA UNA AI NEXTGEN CON SISTEMA AUTONOMO SOBERANO GOBERNADO BAJO LOS CIMIENTOS DEL PROYECTO, PERO CON LA MAXIMIZACION UNIVERSAL DE LOS ELEMENTOS GLOBALES GRATUITOS DE OPEN SOURCE TODOS LOS CAMBIOS DEBEN DE ALINEARSE CON LO QUE YA SE TIENE CONSTRUIDO EN https://github.com/OsoPanda1/ISABELLA-VERSION-TERMINUS-V6 > ## Documentation Index
+> Fetch the complete documentation index at: https://docs.qoder.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Streaming Output
+
+By default, a model's reply is delivered as a single complete message at the end of each turn. With streaming output enabled, the SDK pushes fine-grained incremental chunks as the model generates them — useful for typewriter effects, or for rendering reasoning and tool-invocation progress separately.
+
+<div id="enable" />
+
+## Enable
+
+Enable partial messages in options (`includePartialMessages` in TypeScript, `include_partial_messages` in Python, `includePartialMessages(true)` in Java):
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { qodercliAuth, query } from '@qoder-ai/qoder-agent-sdk';
+
+  const q = query({
+    prompt: 'Write a short analysis report',
+    options: {
+      auth: qodercliAuth(),
+      includePartialMessages: true,
+    },
+  });
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import QoderAgentOptions, access_token_from_env, query
+
+  options = QoderAgentOptions(
+      auth=access_token_from_env(),
+      include_partial_messages=True,
+  )
+
+  async for msg in query(prompt="Write a short analysis report", options=options):
+      ...
+  ```
+
+  ```java Java
+  QoderClient client = QoderClient.builder()
+          .auth(Auth.qoderCli())
+          .build();
+  QoderQuery query = client.query(OneShotQueryRequest.builder()
+          .prompt("Write a short analysis report")
+          .options(SessionOptions.builder()
+                  .includePartialMessages(true)
+                  .build())
+          .build());
+  ```
+</CodeGroup>
+
+Java has no typed stream events. Incremental chunks arrive as [`PartialMessage`](/cli/sdk/references-java#partialmessage), and you parse the event from `rawJson()`. The Java examples below use a `delta(...)` helper to extract the event's `delta` object; the next two sections reuse it.
+
+<div id="typewriter-effect" />
+
+## Typewriter effect
+
+The model's text reply arrives as a sequence of incremental chunks; printing each chunk as it lands gives a typewriter effect:
+
+<CodeGroup>
+  ```typescript TypeScript
+  for await (const msg of q) {
+    if (msg.type === 'stream_event') {
+      const delta = msg.event.delta;
+      if (delta?.type === 'text_delta') {
+        process.stdout.write(delta.text);
+      }
+    }
+  }
+  ```
+
+  ```python Python
+  import sys
+
+  from qoder_agent_sdk import StreamEvent
+
+  async for msg in query(prompt="...", options=options):
+      if isinstance(msg, StreamEvent):
+          delta = msg.event.get("delta")
+          if delta and delta.get("type") == "text_delta":
+              sys.stdout.write(delta["text"])
+              sys.stdout.flush()
+  ```
+
+  ```java Java
+  static void printText(QoderQuery query) {
+      try (MessageCursor cursor = query.messages().openCursor()) {
+          while (cursor.hasNext()) {
+              SdkMessage msg = cursor.next();
+              if (msg instanceof PartialMessage) {
+                  JsonObject delta = delta((PartialMessage) msg);
+                  if (JsonString.of("text_delta").equals(delta.get("type"))) {
+                      System.out.print(delta.get("text").asString());
+                      System.out.flush();
+                  }
+              }
+          }
+      }
+  }
+
+  // Returns event.delta of a stream event, or an empty object when there is none.
+  static JsonObject delta(PartialMessage msg) {
+      JsonValue event = JsonValue.parse(msg.rawJson().orElse("{}")).asObject().get("event");
+      JsonValue delta = event != null && event.isObject() ? event.asObject().get("delta") : null;
+      return delta != null && delta.isObject() ? delta.asObject() : JsonObject.empty();
+  }
+  ```
+</CodeGroup>
+
+<div id="reasoning" />
+
+## Reasoning
+
+Reasoning-capable models emit "thinking" chunks before their final reply:
+
+<CodeGroup>
+  ```typescript TypeScript
+  if (delta?.type === 'thinking_delta') {
+    process.stdout.write(delta.thinking);
+  }
+  ```
+
+  ```python Python
+  if isinstance(msg, StreamEvent):
+      delta = msg.event.get("delta")
+      if delta and delta.get("type") == "thinking_delta":
+          sys.stdout.write(delta["thinking"])
+          sys.stdout.flush()
+  ```
+
+  ```java Java
+  if (JsonString.of("thinking_delta").equals(delta.get("type"))) {
+      System.out.print(delta.get("thinking").asString());
+      System.out.flush();
+  }
+  ```
+</CodeGroup>
+
+<div id="tool-invocation-arguments" />
+
+## Tool invocation arguments
+
+Tool-call arguments are also generated incrementally — for example, you can use this to render the file content the model is writing in real time:
+
+<CodeGroup>
+  ```typescript TypeScript
+  if (delta?.type === 'input_json_delta') {
+    process.stdout.write(delta.partial_json);
+  }
+  ```
+
+  ```python Python
+  if isinstance(msg, StreamEvent):
+      delta = msg.event.get("delta")
+      if delta and delta.get("type") == "input_json_delta":
+          sys.stdout.write(delta["partial_json"])
+          sys.stdout.flush()
+  ```
+
+  ```java Java
+  if (JsonString.of("input_json_delta").equals(delta.get("type"))) {
+      System.out.print(delta.get("partial_json").asString());
+      System.out.flush();
+  }
+  ```
+</CodeGroup>
+
+<div id="push-consumption-java" />
+
+## Push consumption (Java)
+
+The Java examples above pull messages one at a time with a cursor. You can also let the SDK push them: `messages().consume(handler, executor)` calls the handler on the given executor for each message in order, delivering the next message only after the previous one is handled. The returned stage completes normally when the stream ends.
+
+```java Java
+ExecutorService executor = Executors.newSingleThreadExecutor();
+try {
+    query.messages().consume(msg -> {
+        if (msg instanceof PartialMessage) {
+            JsonObject delta = delta((PartialMessage) msg);
+            if (JsonString.of("text_delta").equals(delta.get("type"))) {
+                System.out.print(delta.get("text").asString());
+            }
+        }
+    }, executor).toCompletableFuture().join();
+} finally {
+    executor.shutdown();
+}
+```
+
+Each message stream can be consumed only once. Use either a cursor or `consume()`; a second subscription throws `MessageStreamAlreadyConsumedException`. If the handler throws, the stage returned by `consume()` completes with `CallbackExecutionException` and the owning query or session is closed. Do not block inside the handler, and do not call the blocking `close()` there.
+
+For the full event structure, see [SDK References](/cli/sdk/references). For Java message types, see [Message Types](/cli/sdk/references-java#message-types).
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.qoder.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# SDK Authentication
+
+Every SDK session (TypeScript's `query()`, Python's `query()` / `QoderSDKClient`) must be configured with one authentication method. Java configures it on `QoderClient.Builder.auth()`, and every query and session created by that client uses the same method. A session can only use one:
+
+| Authentication method                              | Identity                     | Use case                                                                              |
+| -------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------- |
+| [Personal Access Token (PAT)](#use-a-pat)          | A Qoder user                 | Scripts, CI, or host applications that need the user's permissions and data           |
+| [Service Account](#use-a-service-account)          | An organization workload     | Backend services, CI, and scheduled jobs that should not depend on a personal account |
+| [Local qodercli session](#reuse-the-local-sign-in) | The currently signed-in user | A developer workstation that is already signed in to Qoder                            |
+
+<div id="use-a-pat" />
+
+## Use a PAT
+
+A PAT represents a Qoder user. Use it for automation that must access that user's permissions and data.
+
+<div id="get-a-pat" />
+
+### Get a PAT
+
+Create a PAT in [Qoder Account Integrations](https://qoder.com/account/integrations):
+
+1. Sign in to Qoder.
+2. Open **Account → Integrations**.
+3. Choose the required permissions and expiry, then create the PAT.
+4. Copy the generated value immediately. It cannot be viewed again after the page is closed.
+
+Create separate PATs for local scripts, CI, and production so they can be rotated or revoked independently.
+
+<div id="read-a-pat-from-the-environment" />
+
+### Read a PAT from the environment
+
+```bash
+export QODER_PERSONAL_ACCESS_TOKEN="<your-qoder-personal-access-token>"
+```
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { accessTokenFromEnv, query } from '@qoder-ai/qoder-agent-sdk';
+
+  const q = query({
+    prompt: 'Summarize the current workspace.',
+    options: {
+      auth: accessTokenFromEnv(),
+    },
+  });
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import QoderAgentOptions, access_token_from_env
+
+  options = QoderAgentOptions(auth=access_token_from_env())
+  ```
+
+  ```java Java
+  import com.qoder.sdk.QoderClient;
+  import com.qoder.sdk.auth.Auth;
+
+  QoderClient client = QoderClient.builder()
+          .auth(Auth.accessTokenEnv())
+          .build();
+  ```
+</CodeGroup>
+
+The function reads `QODER_PERSONAL_ACCESS_TOKEN` by default. To use a custom variable name:
+
+<CodeGroup>
+  ```typescript TypeScript
+  auth: accessTokenFromEnv('MY_QODER_PAT')
+  ```
+
+  ```python Python
+  auth = access_token_from_env("MY_QODER_PAT")
+  ```
+
+  ```java Java
+  .auth(Auth.accessTokenEnv("MY_QODER_PAT"))
+  ```
+</CodeGroup>
+
+If `options.env` and the process environment contain the same variable, the SDK uses the value from `options.env`.
+
+Java reads the variable from the JVM process environment each time it starts the CLI; a same-named variable passed through `putEnvironment()` is not used for authentication. If the variable is unset or empty, startup fails with `AuthenticationException`. The variable is not passed to the CLI subprocess.
+
+<div id="pass-a-pat-directly" />
+
+### Pass a PAT directly
+
+When a trusted backend has already obtained a PAT, pass it directly:
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { accessToken, query } from '@qoder-ai/qoder-agent-sdk';
+
+  const token = await readTokenFromSecretManager();
+  const q = query({
+    prompt: 'List the most recently modified files.',
+    options: {
+      auth: accessToken(token),
+    },
+  });
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import QoderAgentOptions, access_token
+
+  token = read_token_from_secret_manager()
+  options = QoderAgentOptions(auth=access_token(token))
+  ```
+
+  ```java Java
+  import com.qoder.sdk.QoderClient;
+  import com.qoder.sdk.SecretValue;
+  import com.qoder.sdk.auth.Auth;
+
+  char[] token = readTokenFromSecretManager();
+  QoderClient client = QoderClient.builder()
+          .auth(Auth.accessToken(SecretValue.of(token)))
+          .build();
+  ```
+</CodeGroup>
+
+Java wraps credentials in `SecretValue`, whose `toString()` always returns `[REDACTED]`. `SecretValue.of(char[])` copies the array, so the caller can zero it afterward.
+
+The SDK does not refresh PATs. After a PAT becomes invalid, obtain a valid PAT and create a new SDK session.
+
+<div id="use-a-service-account" />
+
+## Use a Service Account
+
+Before you begin, ask a Qoder organization administrator to create a Service Account, grant the permissions your application needs, and generate a key. Store the key in a secret manager and provide it only to a trusted backend process or CI job.
+
+<div id="pass-a-service-account-key-directly" />
+
+### Pass a Service Account key directly
+
+When a trusted backend has already read the key from a secret manager, pass it directly:
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { query, serviceAccount } from '@qoder-ai/qoder-agent-sdk';
+
+  // Get the Service Account key from the host's secret manager adapter.
+  const serviceAccountKey = await readSecret('qoder-service-account-key');
+
+  const q = query({
+    prompt: 'Explain the purpose of this project in one sentence.',
+    options: {
+      auth: serviceAccount({ serviceAccountKey }),
+      cwd: process.cwd(),
+    },
+  });
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import QoderAgentOptions, service_account
+
+  # Get the Service Account key from the host's secret manager adapter.
+  service_account_key = read_secret("qoder-service-account-key")
+  options = QoderAgentOptions(
+      auth=service_account(service_account_key=service_account_key)
+  )
+  ```
+
+  ```java Java
+  import com.qoder.sdk.QoderClient;
+  import com.qoder.sdk.SecretValue;
+  import com.qoder.sdk.auth.Auth;
+
+  // Get the Service Account key from the host's secret manager adapter.
+  char[] serviceAccountKey = SecretManager.read("qoder-service-account-key");
+
+  QoderClient client = QoderClient.builder()
+          .auth(Auth.serviceAccountKey(SecretValue.of(serviceAccountKey)))
+          .build();
+  ```
+</CodeGroup>
+
+The caller passes the Key into the session via `serviceAccount({ serviceAccountKey })` (TypeScript) / `service_account(service_account_key=...)` (Python) / `Auth.serviceAccountKey(SecretValue)` (Java). The SDK and qodercli obtain and refresh a short-lived Service Account Token (SAT) for the session.
+
+```text
+secret manager
+     |
+     | Service Account Key
+     v
+caller reads the key
+     |
+     | serviceAccount({ serviceAccountKey })
+     v
+SDK starts qodercli and obtains a short-lived SAT
+     |
+     `----> authenticate session requests with the SAT
+```
+
+The SDK uses the key and SAT for the current session. The caller provides the key again when creating a new session. In Java the key is kept in the `QoderClient` authentication configuration, and every session the client creates afterward uses it. Read the key from a secret manager, and keep key literals out of source code, browser bundles, mobile applications, logs, and test snapshots.
+
+<div id="provide-and-refresh-sats-from-the-host" />
+
+### Provide and refresh SATs from the host
+
+If the host application embedding the SDK is responsible for exchanging SATs, use the fetch-callback form (TypeScript's `serviceAccount({ fetchServiceAccountToken })`, Python's `service_account(fetch_service_account_token=...)`, Java's `Auth.serviceAccountTokenProvider(...)`). The Service Account Key stays in the host process, and qodercli receives SATs from the host callback.
+
+The callback is implemented by the host. qodercli invokes it whenever it needs a SAT; on each request, the host calls the Token exchange API and returns the fresh SAT from the response to qodercli.
+
+```text
+qodercli
+     |
+     | request a SAT
+     v
+fetchServiceAccountToken callback in the SDK host
+     |
+     | call Token exchange with the host-managed Service Account key
+     v
+Qoder Token exchange
+     |
+     `----> return the short-lived SAT to qodercli
+```
+
+This complete example performs the exchange inside the host:
+
+<CodeGroup>
+  ```typescript TypeScript
+  import {
+    query,
+    serviceAccount,
+    type ServiceAccountTokenResult,
+  } from '@qoder-ai/qoder-agent-sdk';
+
+  // Get the Service Account key from the host's secret manager adapter.
+  const serviceAccountKey = await readSecret('qoder-service-account-key');
+  // Example: select the scopes used for model listing and inference.
+  const serviceAccountScopes = ['models.read', 'chat.completions'];
+
+  async function fetchServiceAccountToken(): Promise<ServiceAccountTokenResult> {
+    const response = await fetch(
+      'https://openapi.qoder.sh/api/v1/serviceToken/exchange',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${serviceAccountKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          grant_type: 'client_credentials',
+          audience: 'qoder',
+          scope: serviceAccountScopes.join(' '),
+          ttl_seconds: 3600,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Unable to obtain a Qoder SAT: HTTP ${response.status}`);
+    }
+
+    const result = (await response.json()) as {
+      access_token: string;
+      expires_in?: number;
+    };
+
+    return {
+      token: result.access_token,
+      expiresAt:
+        result.expires_in === undefined
+          ? undefined
+          : Date.now() + result.expires_in * 1000,
+    };
+  }
+
+  const q = query({
+    prompt: 'Summarize the current deployment configuration.',
+    options: {
+      auth: serviceAccount({ fetchServiceAccountToken }),
+    },
+  });
+  ```
+
+  ```python Python
+  import time
+
+  import httpx
+
+  from qoder_agent_sdk import (
+      QoderAgentOptions,
+      ServiceAccountTokenResult,
+      service_account,
+  )
+
+  # Get the Service Account key from the host's secret manager adapter.
+  service_account_key = read_secret("qoder-service-account-key")
+  # Example: select the scopes used for model listing and inference.
+  service_account_scopes = ("models.read", "chat.completions")
+
+  async def fetch_service_account_token() -> ServiceAccountTokenResult:
+      async with httpx.AsyncClient() as client:
+          response = await client.post(
+              "https://openapi.qoder.sh/api/v1/serviceToken/exchange",
+              headers={"Authorization": f"Bearer {service_account_key}"},
+              json={
+                  "grant_type": "client_credentials",
+                  "audience": "qoder",
+                  "scope": " ".join(service_account_scopes),
+                  "ttl_seconds": 3600,
+              },
+          )
+
+      response.raise_for_status()
+      result = response.json()
+      return ServiceAccountTokenResult(
+          token=result["access_token"],
+          expires_at=(
+              None
+              if result.get("expires_in") is None
+              else int(time.time()) + int(result["expires_in"])
+          ),
+      )
+
+  options = QoderAgentOptions(
+      auth=service_account(
+          fetch_service_account_token=fetch_service_account_token
+      )
+  )
+  ```
+
+  ```java Java
+  import com.qoder.sdk.QoderClient;
+  import com.qoder.sdk.SecretValue;
+  import com.qoder.sdk.auth.Auth;
+  import com.qoder.sdk.json.JsonNumber;
+  import com.qoder.sdk.json.JsonObject;
+  import com.qoder.sdk.json.JsonString;
+  import com.qoder.sdk.json.JsonValue;
+
+  import java.io.ByteArrayOutputStream;
+  import java.io.IOException;
+  import java.io.InputStream;
+  import java.io.OutputStream;
+  import java.io.UncheckedIOException;
+  import java.net.HttpURLConnection;
+  import java.net.URL;
+  import java.nio.charset.StandardCharsets;
+  import java.util.concurrent.CompletableFuture;
+  import java.util.concurrent.ExecutorService;
+  import java.util.concurrent.Executors;
+
+  public class ServiceAccountTokens {
+      // Get the Service Account key from the host's secret manager adapter.
+      private static final char[] SERVICE_ACCOUNT_KEY = SecretManager.read("qoder-service-account-key");
+      // Example: select the scopes used for model listing and inference.
+      private static final String SERVICE_ACCOUNT_SCOPES = "models.read chat.completions";
+
+      static SecretValue fetchServiceAccountToken() {
+          HttpURLConnection connection = null;
+          try {
+              connection = (HttpURLConnection) new URL(
+                      "https://openapi.qoder.sh/api/v1/serviceToken/exchange").openConnection();
+              // HttpURLConnection waits forever by default; bound connecting and reading.
+              connection.setConnectTimeout(10_000);
+              connection.setReadTimeout(10_000);
+              connection.setRequestMethod("POST");
+              connection.setRequestProperty("Authorization", "Bearer " + new String(SERVICE_ACCOUNT_KEY));
+              connection.setRequestProperty("Content-Type", "application/json");
+              connection.setDoOutput(true);
+              String body = JsonObject.builder()
+                      .put("grant_type", JsonString.of("client_credentials"))
+                      .put("audience", JsonString.of("qoder"))
+                      .put("scope", JsonString.of(SERVICE_ACCOUNT_SCOPES))
+                      .put("ttl_seconds", JsonNumber.of(3600))
+                      .build()
+                      .toJson();
+              try (OutputStream out = connection.getOutputStream()) {
+                  out.write(body.getBytes(StandardCharsets.UTF_8));
+              }
+              int status = connection.getResponseCode();
+              if (status != HttpURLConnection.HTTP_OK) {
+                  throw new IllegalStateException("Unable to obtain a Qoder SAT: HTTP " + status);
+              }
+              try (InputStream in = connection.getInputStream()) {
+                  JsonObject result = JsonValue.parse(readAll(in)).asObject();
+                  return SecretValue.of(result.get("access_token").asString());
+              }
+          } catch (IOException e) {
+              throw new UncheckedIOException(e);
+          } finally {
+              if (connection != null) {
+                  connection.disconnect();
+              }
+          }
+      }
+
+      private static String readAll(InputStream in) throws IOException {
+          ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+          byte[] chunk = new byte[8192];
+          for (int n; (n = in.read(chunk)) != -1; ) {
+              buffer.write(chunk, 0, n);
+          }
+          return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+      }
+
+      public static void main(String[] args) {
+          ExecutorService tokenExecutor = Executors.newSingleThreadExecutor();
+          try (QoderClient client = QoderClient.builder()
+                  .auth(Auth.serviceAccountTokenProvider(() -> CompletableFuture.supplyAsync(
+                          ServiceAccountTokens::fetchServiceAccountToken, tokenExecutor)))
+                  .build()) {
+              // Create queries and sessions with this client.
+          } finally {
+              tokenExecutor.shutdown();
+          }
+      }
+  }
+  ```
+</CodeGroup>
+
+The scope and callback return value are configured as follows:
+
+- When obtaining the SAT, enter the scopes that it should contain. For example, use `models.read chat.completions` to list models and call the inference API.
+- Put the SAT returned by Token exchange in the callback result. You can also provide the SAT expiry.
+- When a valid SAT cannot be obtained, return `null` (`None` in Python) or throw an exception so the current session fails explicitly.
+- In Java the callback returns `CompletionStage<SecretValue>`. It carries only the token, with no expiry field; when no token is available, return an exceptionally completed stage. The SDK reports a fixed error message to the CLI and does not forward the callback's failure details.
+- Java invokes the callback on the client's `callbackExecutor`. Run slow work such as HTTP requests on the application's own executor and report the result through the returned stage, as in the example above. Do not block the callback thread.
+- Set connect and read timeouts on the HTTP request and release the connection when done. `HttpURLConnection` waits forever by default. The SDK's callback timeout (`controlRequestTimeoutMs`) only ends the authentication request; it does not stop an HTTP call that is still running. If the server never responds, the task keeps the executor thread busy, later authentication requests queue behind it, and the JVM cannot exit normally.
+
+<div id="reuse-the-local-sign-in" />
+
+## Reuse the local sign-in
+
+If the workstation is already signed in through `qodercli`, the SDK can use the same session. This method is suitable for a developer workstation, not stateless CI or production services.
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { qodercliAuth, query } from '@qoder-ai/qoder-agent-sdk';
+
+  const q = query({
+    prompt: 'Summarize the current workspace.',
+    options: {
+      auth: qodercliAuth(),
+    },
+  });
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import QoderAgentOptions, qodercli_auth
+
+  options = QoderAgentOptions(auth=qodercli_auth())
+  ```
+
+  ```java Java
+  import com.qoder.sdk.QoderClient;
+  import com.qoder.sdk.auth.Auth;
+
+  QoderClient client = QoderClient.builder()
+          .auth(Auth.qoderCli())
+          .build();
+  ```
+</CodeGroup>
+
+The Java CLI subprocess inherits only `PATH` by default. Variables the CLI needs to read the sign-in state, such as `HOME`, must be passed explicitly. See [Subprocess environment (Java)](#subprocess-environment).
+
+<div id="authentication-failure-callback" />
+
+## Authentication Failure Callback (TypeScript, Python)
+
+When the remote side rejects the token, the token expires, or the CLI exits with an authentication error, use `onAuthExpired` (TypeScript) / `on_auth_expired` (Python) to trigger a re-login or token-exchange flow. It fires at most once per SDK session.
+
+<CodeGroup>
+  ```python Python
+  from qoder_agent_sdk import QoderAgentOptions, access_token_from_env
+
+  def show_sign_in_required() -> None:
+      print("Authentication has expired. Please sign in again.")
+
+  options = QoderAgentOptions(
+      auth=access_token_from_env(),
+      on_auth_expired=show_sign_in_required,
+  )
+  ```
+</CodeGroup>
+
+The SDK does not automatically refresh PATs. After obtaining a new token, create a new SDK session with the new `auth` configuration.
+
+<div id="authentication-errors" />
+
+## Authentication Errors
+
+Python SDK authentication configuration errors raise exceptions with a `code`:
+
+- Missing authentication configuration: `AuthNotConfiguredError`, with `code == "auth_not_configured"`.
+- Missing PAT environment variable: `AuthAccessTokenEnvVarError`, with `code == "auth_access_token_env_var_not_configured"`.
+- Missing Service Account Key environment variable: `AuthServiceAccountEnvVarError`, with `code == "auth_service_account_env_var_not_configured"`.
+
+Java SDK authentication errors all extend `QoderException`; tell them apart with `getCode()`:
+
+- `auth()` was not called: `QoderClient.Builder.build()` throws `InvalidOptionsException` synchronously, and `getCode()` is `INVALID_OPTIONS`.
+- The variable read by `Auth.accessTokenEnv()` is unset or empty: startup fails with `AuthenticationException`, and `getCode()` is `AUTHENTICATION_FAILED`.
+- The CLI exits with an authentication failure (exit code 41): `AuthenticationException` with `getCode()` `CLI_AUTH_FATAL`. Java has no authentication failure callback. Catch the exception, prompt the user to sign in again or replace the credential, then create a new query or session.
+
+Startup and runtime failures are delivered through the message cursor, the stage returned by `consume()`, or the stage returned by `openSession()`. For the full list, see [Java exception list](/cli/sdk/references-java#exception-list).
+
+<div id="subprocess-environment" />
+
+## Subprocess environment (Java)
+
+When the Java SDK starts the CLI subprocess, it inherits only the parent's `PATH` by default. On Windows it also inherits system directory variables such as `SystemRoot`, `TEMP`, `TMP`, `USERPROFILE`, `APPDATA`, and `LOCALAPPDATA`. Pass any other variable the CLI needs, such as `HOME`, locale settings, or a proxy address, explicitly through `SessionOptions.Builder`:
+
+```java Java
+SessionOptions.Builder options = SessionOptions.builder();
+String home = System.getenv("HOME");
+if (home != null) {
+    options.putEnvironment("HOME", home);
+}
+String proxy = System.getenv("HTTPS_PROXY");
+if (proxy != null) {
+    options.putProxyEnvironment("HTTPS_PROXY", SecretValue.of(proxy));
+}
+SessionOptions sessionOptions = options.build();
+```
+
+- `putEnvironment(String, String)` adds one variable and `environment(Map)` adds several; neither clears variables set earlier.
+- A proxy address can contain a username and password, so pass it with `putProxyEnvironment(String, SecretValue)`. The SDK redacts its credentials in diagnostics and stderr. Proxy variables such as `HTTPS_PROXY` passed through `putEnvironment` are handled the same way.
+- Credential variables managed by the SDK, such as `QODER_PERSONAL_ACCESS_TOKEN`, are never passed to the CLI and are stripped even when set explicitly. Authentication can only be configured through `Auth`.
+
+<div id="best-practices" />
+
+## Best Practices
+
+- In production and CI, provide credentials through a secret manager; do not put credentials in source code.
+- Do not write PATs, Service Account keys, or SATs to logs, error objects, or debug output.
+- Configure a PAT or Service Account explicitly for automated environments instead of relying on the local `qodercli` sign-in.
+- For user-facing applications, register the auth-expired callback to turn authentication failures into clear sign-in prompts.
+- After updating or rotating credentials, create a new SDK session; do not reuse a session that has already failed authentication.
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.qoder.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Subagents
+
+Subagents are specialized roles that the main session can delegate to temporarily. The Qoder Agent SDK supports two kinds of subagents:
+
+- **Built-in subagents**: Provided by qodercli, such as general search, code exploration, planning, and related roles.
+- **Custom subagents**: Defined by SDK users through `options.agents`, suitable for business review, test execution, security analysis, and other specialized roles.
+
+This guide focuses on using built-in subagents from the SDK and defining custom subagents when needed. You can read it from top to bottom or jump to a specific configuration item. For complete type definitions, see [Agents Reference](/cli/sdk/references).
+
+Unless stated otherwise, "Agent" in this page means a subagent the main session can delegate to; `options.agent` is the special usage that runs a subagent definition as the main-session role.
+
+**Language availability: TypeScript, Python.**
+
+The Java SDK has no `agents` or `agent` option and no method to list available subagents.
+
+<div id="built-in-subagents" />
+
+## Built-in Subagents
+
+When using a built-in subagent, you do not need to write the subagent definition yourself. You only need to know its name and reference it from the SDK.
+
+Common built-in subagents currently provided by qodercli:
+
+| Name              | Purpose                                                                                                                                |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `general-purpose` | General-purpose subagent, suitable for searching code, researching complex problems, and executing multi-step tasks                    |
+| `Explore`         | Read-only code exploration subagent, suitable for quickly finding files, searching keywords, and understanding code structure          |
+| `Plan`            | Read-only planning subagent, suitable for designing implementation plans, identifying key files, and analyzing architectural tradeoffs |
+
+The built-in subagent list can change with the qodercli version and current configuration. In the interactive CLI, enter `/agents` to view the currently discovered subagents. From the command line, you can also run:
+
+```bash
+qodercli agents list
+```
+
+After the SDK session initializes, you can read the subagents actually available in the current session:
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { query } from '@qoder-ai/qoder-agent-sdk';
+
+  const q = query({ prompt: 'List available agents.' });
+  const agents = await q.supportedAgents();
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import QoderSDKClient, QoderAgentOptions
+
+  client = QoderSDKClient(options=QoderAgentOptions())
+  await client.connect("List available agents.")
+  agents = client.supported_agents()
+  await client.disconnect()
+  ```
+</CodeGroup>
+
+The returned list includes subagents registered via `options.agents` as well as built-in, user, project, and plugin subagents the CLI has discovered that apply to SDK scenarios. `general-purpose`, `Explore`, and `Plan` can appear in SDK sessions by default; the interactive-CLI helpers `qoder-guide` and `statusline-setup` are not supported in SDK sessions and won't appear in the results. See [AgentInfo](/cli/sdk/references) for the structure.
+
+---
+
+<div id="using-built-in-subagents" />
+
+## Using Built-in Subagents
+
+<div id="run-as-the-main-session-role" />
+
+### Run as the Main Session Role
+
+If you want the whole session to run under a built-in subagent role, pass the built-in subagent name directly to `options.agent`. You do not need to redefine it in `options.agents`.
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { query } from '@qoder-ai/qoder-agent-sdk';
+
+  const q = query({
+    prompt: 'Summarize this project architecture and identify the most important modules.',
+    options: {
+      agent: 'general-purpose',
+    },
+  });
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import QoderAgentOptions, query
+
+  options = QoderAgentOptions(agent="general-purpose")
+
+  async for message in query(
+      prompt="Summarize this project architecture and identify the most important modules.",
+      options=options,
+  ):
+      print(message)
+  ```
+</CodeGroup>
+
+`options.agent` can reference a subagent registered by the SDK, or a built-in, user, project, or plugin subagent discovered by the current CLI and suitable for SDK sessions.
+
+<div id="delegate-as-a-subagent" />
+
+### Delegate as a Subagent
+
+Subagent delegation happens through the built-in `Agent` tool. The main session's available tool set must include `Agent`; otherwise the model has no entry point for delegation. In SDK usage, a common pattern is to pre-authorize that tool call path and name the desired subagent in the prompt.
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    prompt: 'Use the Explore agent to find where authentication is implemented.',
+    options: {
+      // Pre-authorize Agent tool calls. If options.tools restricts the tool set, include 'Agent' there too.
+      allowedTools: ['Agent'],
+    },
+  });
+  ```
+
+  ```python Python
+  options = QoderAgentOptions(
+      allowed_tools=["Agent"],
+  )
+
+  async for message in query(
+      prompt="Use the Explore agent to find where authentication is implemented.",
+      options=options,
+  ):
+      print(message)
+  ```
+</CodeGroup>
+
+`allowedTools: ['Agent']` / `allowed_tools=["Agent"]` pre-approves this class of tool calls; if you also narrow the main session's tool set with `options.tools`, include `Agent` there too. Never put `Agent` in the denylist.
+
+Subagent names must match the current discovery results, including case. Current built-in names include `Explore`, `Plan`, and `general-purpose`. When unsure, read the supported subagent list first.
+
+---
+
+<div id="custom-subagents" />
+
+## Custom Subagents
+
+When built-in subagents do not fit your business or project constraints, define custom subagents with `options.agents`. For example:
+
+- Read-only code review subagent: can only read files and search, and cannot modify code.
+- Test execution subagent: can run test commands and analyze failure reasons.
+- Security review subagent: focuses only on authentication, authorization, injection, sensitive information leakage, and related risks.
+- Business support subagent: can only call specific MCP tools, such as order lookup, ticket search, or internal knowledge base search.
+
+Custom subagents usually involve three steps:
+
+1. Define the subagent name, usage description, and system prompt in `options.agents`.
+2. Narrow the tools it can use with `tools` or `disallowedTools`.
+3. Let the main session delegate to it through the `Agent` tool, or use `options.agent` to let it drive the main session directly.
+
+> **The `Agent` tool is required**: custom subagents are delegated to via the built-in `Agent` tool, so the tool allowlist must include `Agent`.
+
+---
+
+<div id="defining-custom-subagents-with-optionsagents" />
+
+## Defining Custom Subagents with options.agents
+
+Minimal example: register a read-only code review subagent.
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { query } from '@qoder-ai/qoder-agent-sdk';
+
+  const q = query({
+    prompt: 'Use the code-reviewer agent to review the authentication module.',
+    options: {
+      // Pre-authorize Agent tool calls. If options.tools restricts the tool set, include 'Agent' there too.
+      allowedTools: ['Agent'],
+      agents: {
+        'code-reviewer': {
+          description:
+            'Reviews code for correctness, security issues, and maintainability problems.',
+          prompt: `You are a code review specialist.
+  Review the requested code and report concrete findings.
+  Sort findings by severity and include file paths when possible.`,
+          tools: ['Read', 'Grep', 'Glob'],
+        },
+      },
+    },
+  });
+
+  for await (const message of q) {
+    // Consume streamed messages according to your application needs.
+  }
+  ```
+
+  ```python Python
+  import asyncio
+
+  from qoder_agent_sdk import AgentDefinition, QoderAgentOptions, query
+
+  async def main():
+      options = QoderAgentOptions(
+          allowed_tools=["Agent"],
+          agents={
+              "code-reviewer": AgentDefinition(
+                  description=(
+                      "Reviews code for correctness, security issues, and "
+                      "maintainability problems."
+                  ),
+                  prompt="""You are a code review specialist.
+  Review the requested code and report concrete findings.
+  Sort findings by severity and include file paths when possible.""",
+                  tools=["Read", "Grep", "Glob"],
+              ),
+          },
+      )
+
+      async for message in query(
+          prompt="Use the code-reviewer agent to review the authentication module.",
+          options=options,
+      ):
+          print(message)
+
+  asyncio.run(main())
+  ```
+</CodeGroup>
+
+There are three key points in this example:
+
+- `options.agents` registers the custom subagent available to this session.
+- Subagent delegation happens through the `Agent` tool; that call path must be pre-approved here.
+- The subagent's own `tools` only allow reading and searching, so it cannot edit files or execute commands.
+
+<div id="optionsagents-input" />
+
+### `options.agents` Input
+
+`options.agents` maps subagent names to subagent definitions. Full type in [AgentDefinition](/cli/sdk/references).
+
+| Field             | Type                   | Required | How to set it                                            | Description                                                                                |
+| ----------------- | ---------------------- | -------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `description`     | `string`               | Yes      | One sentence describing when to use this subagent        | Routing description for the model; affects whether it is invoked                           |
+| `prompt`          | `string`               | Yes      | The subagent's role, boundaries, and output requirements | System prompt for this subagent                                                            |
+| `tools`           | `string[]`             | No       | For example `['Read', 'Grep', 'Glob']`                   | Tool allowlist; when set, only listed tools can be used                                    |
+| `disallowedTools` | `string[]`             | No       | For example `['Bash', 'Write']`                          | Tool blocklist, useful when excluding only a few tools                                     |
+| `model`           | `string`               | No       | For example `'inherit'`, `'auto'`, `'performance'`       | Model configuration for the subagent                                                       |
+| `maxTurns`        | `number`               | No       | For example `8`                                          | Limits how many turns the subagent may execute                                             |
+| `effort`          | `EffortLevel`          | No       | For example `'low'`, `'medium'`, `'high'`, `'max'`       | Controls reasoning effort                                                                  |
+| `permissionMode`  | `PermissionMode`       | No       | For example `'default'`, `'acceptEdits'`, `'plan'`       | Controls the permission mode for tool calls inside the subagent                            |
+| `skills`          | `string[]`             | No       | For example `['review']`                                 | Skills preloaded into the subagent context                                                 |
+| `mcpServers`      | `AgentMcpServerSpec[]` | No       | MCP server names or configurations                       | Limits or adds MCP servers for the subagent                                                |
+| `initialPrompt`   | `string`               | No       | First-turn automatic input                               | Only takes effect when this subagent becomes the main session role through `options.agent` |
+
+> **Python note**: `AgentDefinition` field names use protocol-style camelCase—`disallowedTools`, `maxTurns`, `initialPrompt`, `permissionMode`—not `disallowed_tools`, `max_turns`.
+
+---
+
+<div id="configuring-the-subagent-role" />
+
+## Configuring the Subagent Role
+
+`description` and `prompt` are the two most important fields for a custom subagent.
+
+<div id="description" />
+
+### `description`
+
+`description` says "when this subagent should be used". The model uses it to decide whether to delegate.
+
+```
+description: 'Runs project tests, analyzes failing output, and suggests fixes.'
+```
+
+A good `description` should state the task boundary clearly. Avoid generic descriptions such as `A helpful agent` or `Helper`.
+
+<div id="prompt" />
+
+### `prompt`
+
+`prompt` defines the subagent's role, boundaries, and output style. TypeScript type-checking fails without `prompt`; Python's `AgentDefinition` constructor requires it as well.
+
+```
+prompt: `You are a code review specialist.
+Only review the requested code; do not edit files.
+Return findings sorted by severity, with file paths and suggested fixes.`
+```
+
+If `prompt` is just a generic "you are a helpful assistant", the model may still call the subagent, but it will behave like an ordinary assistant: unclear on what to check first, what to avoid, and how to return results.
+
+At minimum, `prompt` should explain three things:
+
+| What to explain       | Example                                                |
+| --------------------- | ------------------------------------------------------ |
+| What task it owns     | `Review code for security and maintainability issues.` |
+| What it should not do | `Do not edit files. Do not run commands.`              |
+| How to return results | `Return findings sorted by severity with file paths.`  |
+
+---
+
+<div id="configuring-model-and-reasoning" />
+
+## Configuring Model and Reasoning
+
+First make `description` and `prompt` clear, then consider `model`, `effort`, and `maxTurns`. The former decides whether the subagent is invoked correctly and whether it understands its boundaries. The latter mainly tunes quality, speed, and cost after the role is clear.
+
+| Option     | Controls                                                | When to adjust first                                                                               |
+| ---------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `model`    | Selects the subagent's model tier                       | The subagent handles a fixed task type long-term and needs stable control over capability and cost |
+| `effort`   | How much reasoning budget to spend under the same model | The same subagent occasionally receives a more complex task that needs more careful reasoning      |
+| `maxTurns` | The maximum number of turns                             | The task may explore too deeply or run too long, or you want a hard cost limit                     |
+
+Use this order of judgment:
+
+1. Start with no setting, or set `model: 'inherit'`, so the subagent follows the main session model.
+2. For frequent, simple, low-risk tasks, use `model: 'efficient'` or `model: 'lite'` to reduce cost.
+3. For architecture design, complex refactors, cross-module reviews, and other high-risk tasks, use `model: 'performance'` or `model: 'ultimate'`.
+4. If the model tier stays the same but you want the subagent to think more on the current task, increase `effort`.
+5. If you are worried about runaway exploration, combine it with `maxTurns`.
+
+Common combinations:
+
+| Scenario                                       | Recommended configuration                                 | Description                                                         |
+| ---------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------- |
+| Quick Q\&A, format conversion, simple locating | `model: 'efficient'`, `effort: 'low'`, `maxTurns: 3`      | Cheap and fast, suitable for low-risk tasks                         |
+| Read-only code exploration and module mapping  | `model: 'auto'` or `'inherit'`, `effort: 'medium'`        | Let routing or the main session model decide the capability tier    |
+| Code review, security review, migration plan   | `model: 'performance'`, `effort: 'high'`                  | Better for tasks that require careful tradeoffs and issue discovery |
+| Complex system design and difficult analysis   | `model: 'ultimate'`, `effort: 'high'` or `'max'`          | Higher cost; recommended only for critical complex tasks            |
+| Batch helper subtasks                          | `model: 'efficient'`, `effort: 'low'`, smaller `maxTurns` | Helps control total cost in multi-subagent collaboration            |
+
+Example: give different subagents different strategies.
+
+<CodeGroup>
+  ```typescript TypeScript
+  agents: {
+    explorer: {
+      description: 'Quickly searches code and summarizes relevant files.',
+      prompt: 'Find relevant files and return a concise summary. Do not edit.',
+      tools: ['Read', 'Grep', 'Glob'],
+      model: 'efficient',
+      effort: 'low',
+      maxTurns: 5,
+    },
+    architect: {
+      description: 'Designs complex implementation plans across modules.',
+      prompt: 'Analyze tradeoffs carefully and return an implementation plan with risks.',
+      tools: ['Read', 'Grep', 'Glob'],
+      model: 'performance',
+      effort: 'high',
+      maxTurns: 10,
+    },
+  }
+  ```
+
+  ```python Python
+  agents = {
+      "explorer": AgentDefinition(
+          description="Quickly searches code and summarizes relevant files.",
+          prompt="Find relevant files and return a concise summary. Do not edit.",
+          tools=["Read", "Grep", "Glob"],
+          model="inherit",
+          effort="low",
+          maxTurns=5,
+      ),
+      "architect": AgentDefinition(
+          description="Designs complex implementation plans across modules.",
+          prompt="Analyze tradeoffs carefully and return an implementation plan with risks.",
+          tools=["Read", "Grep", "Glob"],
+          model="auto",
+          effort="high",
+          maxTurns=10,
+      ),
+  }
+  ```
+</CodeGroup>
+
+See `model`, `maxTurns`, and `effort` in the [Agents Reference](/cli/sdk/references) for the full values.
+
+---
+
+<div id="controlling-subagent-tools" />
+
+## Controlling Subagent Tools
+
+Custom subagents and the main session use the same tool names. Built-in tool names include `Read`, `Grep`, `Glob`, and `Bash`; custom MCP tools use the full format `mcp__{serverName}__{toolName}`. These settings decide which tools the subagent can see and call.
+
+<div id="the-main-sessions-agent-tool" />
+
+### The Main Session's `Agent` Tool
+
+`options.agents` only registers subagents—it doesn't call them for the model. To delegate, the main session's tool set must contain `Agent`. The default tool set usually registers it; if you restrict tools with `options.tools`, remember to include `Agent`; putting `Agent` in the denylist disables delegation.
+
+<div id="tool-allowlist-tools" />
+
+### Tool Allowlist: `tools`
+
+`tools` is the subagent's tool allowlist. Once set, the subagent can only use listed tools.
+
+```
+tools: ['Read', 'Grep', 'Glob']
+```
+
+Common tool combinations:
+
+| Scenario            | Recommended tools                       | Description                                               |
+| ------------------- | --------------------------------------- | --------------------------------------------------------- |
+| Read-only analysis  | `Read`, `Grep`, `Glob`                  | Can inspect code; cannot modify files or run commands     |
+| Run tests           | `Bash`, `Read`, `Grep`                  | Can execute test commands and analyze output              |
+| Write code          | `Read`, `Edit`, `Write`, `Grep`, `Glob` | Can read and write files but cannot run commands directly |
+| Call business tools | `mcp__server__tool`                     | Only allows specific custom tools                         |
+
+<div id="tool-blocklist-disallowedtools" />
+
+### Tool Blocklist: `disallowedTools`
+
+`disallowedTools` fits "allow most tools, exclude a few".
+
+```
+disallowedTools: ['Bash', 'Write']
+```
+
+Usually avoid setting both `tools` and `disallowedTools` unless you are certain of the final tool set.
+
+<div id="relationship-to-main-session-tool-configuration" />
+
+### Relationship to Main Session Tool Configuration
+
+A subagent's `tools` and `disallowedTools` only apply to that subagent. They do not inherit the main session's tool allowlist or blocklist trimming. Even if the main session only pre-authorizes the `Agent` delegation path, the subagent can still use its own configured `Read`, `Grep`, and related tools.
+
+<CodeGroup>
+  ```typescript TypeScript
+  query({
+    prompt: 'Use the analyst agent to inspect the repository.',
+    options: {
+      // Pre-authorize the main session to call the Agent tool.
+      allowedTools: ['Agent'],
+      agents: {
+        analyst: {
+          description: 'Reads and summarizes code structure.',
+          prompt: 'Inspect relevant files and return a concise summary. Do not edit files.',
+          tools: ['Read', 'Grep', 'Glob'],
+        },
+      },
+    },
+  });
+  ```
+
+  ```python Python
+  options = QoderAgentOptions(
+      allowed_tools=["Agent"],
+      agents={
+          "analyst": AgentDefinition(
+              description="Reads and summarizes code structure.",
+              prompt="Inspect relevant files and return a concise summary. Do not edit files.",
+              tools=["Read", "Grep", "Glob"],
+          ),
+      },
+  )
+  ```
+</CodeGroup>
+
+---
+
+<div id="controlling-subagent-permissions" />
+
+## Controlling Subagent Permissions
+
+The tool set decides which tools a subagent *can call*; permission config decides how those calls are *approved or blocked*. `permissionMode` can be set per subagent to control the permission behavior of its internal tool execution.
+
+<CodeGroup>
+  ```typescript TypeScript
+  agents: {
+    planner: {
+      description: 'Plans implementation work without making changes.',
+      prompt: 'Read relevant files and return an implementation plan. Do not edit files.',
+      tools: ['Read', 'Grep', 'Glob'],
+      permissionMode: 'plan',
+    },
+  }
+  ```
+
+  ```python Python
+  AgentDefinition(
+      description="Plans implementation work without making changes.",
+      prompt="Read relevant files and return an implementation plan. Do not edit files.",
+      tools=["Read", "Grep", "Glob"],
+      permissionMode="plan",
+  )
+  ```
+</CodeGroup>
+
+See the [Agents Reference](/cli/sdk/references) for the full set of `permissionMode` values and their meanings. If a tool needs user approval, use the session-level `canUseTool` / `can_use_tool` callback. The subagent ID is `context.agentID` in TypeScript and `context.agent_id` in Python. See [Approval and User Input](/cli/sdk/user-input#when-canusetool-runs) for the callback rules.
+
+---
+
+<div id="loading-skills-for-subagents" />
+
+## Loading Skills for Subagents
+
+`skills` preloads specialized skills for a subagent. It is useful when you want to bind a specific workflow, team convention, or tool usage pattern to one subagent instead of putting it in every prompt.
+
+<CodeGroup>
+  ```typescript TypeScript
+  agents: {
+    reviewer: {
+      description: 'Reviews pull requests using the team review workflow.',
+      prompt: 'Review the requested changes and return actionable findings.',
+      tools: ['Read', 'Grep', 'Glob'],
+      skills: ['review'],
+    },
+  }
+  ```
+
+  ```python Python
+  AgentDefinition(
+      description="Reviews pull requests using the team review workflow.",
+      prompt="Review the requested changes and return actionable findings.",
+      tools=["Read", "Grep", "Glob"],
+      skills=["review"],
+  )
+  ```
+</CodeGroup>
+
+Recommendations:
+
+| Scenario                                           | How to configure                                                      |
+| -------------------------------------------------- | --------------------------------------------------------------------- |
+| The subagent always follows a specialized workflow | Put the corresponding skill in the subagent's `skills`                |
+| Only the main session needs a skill                | Use session-level `options.skills`; do not put it in the subagent     |
+| A plugin-provided skill                            | Use the plugin-qualified name, for example `sdk-test-plugin:sdk-echo` |
+
+Subagent `skills` only affect that subagent's context. They are not the same as main-session `options.skills`. For session-level skill behavior, see [Skills](/cli/sdk/skills).
+
+---
+
+<div id="configuring-subagent-mcpservers" />
+
+## Configuring Subagent mcpServers
+
+`mcpServers` limits or adds MCP servers for a subagent. It is suitable for exposing business tools only to the subagents that need them, such as order lookup, ticket search, or internal knowledge base search.
+
+You can reference an MCP server already configured at the session level:
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    prompt: 'Use the support agent to check the latest order status.',
+    options: {
+      mcpServers: {
+        orders: {
+          type: 'stdio',
+          command: 'node',
+          args: ['servers/orders.js'],
+        },
+      },
+      allowedTools: ['Agent'],
+      agents: {
+        support: {
+          description: 'Answers customer support questions using order tools.',
+          prompt: 'Use order tools when needed and return a concise answer.',
+          mcpServers: ['orders'],
+          tools: ['mcp__orders__get_order'],
+        },
+      },
+    },
+  });
+  ```
+
+  ```python Python
+  options = QoderAgentOptions(
+      mcp_servers={
+          "orders": {
+              "command": "python",
+              "args": ["servers/orders.py"],
+          },
+      },
+      allowed_tools=["Agent"],
+      agents={
+          "support": AgentDefinition(
+              description="Answers customer support questions using order tools.",
+              prompt="Use order tools when needed and return a concise answer.",
+              mcpServers=["orders"],
+              tools=["mcp__orders__lookup_order"],
+          ),
+      },
+  )
+  ```
+</CodeGroup>
+
+You can also configure a dedicated MCP server for a specific subagent:
+
+<CodeGroup>
+  ```typescript TypeScript
+  agents: {
+    knowledge: {
+      description: 'Searches the internal knowledge base.',
+      prompt: 'Search the knowledge base and cite the relevant entries.',
+      mcpServers: [
+        {
+          kb: {
+            type: 'stdio',
+            command: 'node',
+            args: ['servers/kb.js'],
+          },
+        },
+      ],
+      tools: ['mcp__kb__search'],
+    },
+  }
+  ```
+
+  ```python Python
+  options = QoderAgentOptions(
+      allowed_tools=["Agent"],
+      agents={
+          "knowledge": AgentDefinition(
+              description="Searches the internal knowledge base.",
+              prompt="Search the knowledge base and cite the relevant entries.",
+              mcpServers=[
+                  {
+                      "kb": {
+                          "command": "python",
+                          "args": ["servers/kb.py"],
+                      },
+                  },
+              ],
+              tools=["mcp__kb__search"],
+          ),
+      },
+  )
+  ```
+</CodeGroup>
+
+Recommendations:
+
+| Scenario                                  | How to configure                                                                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Multiple subagents share one MCP server   | Configure the server at session level in the MCP servers option, then reference its name in each subagent's `mcpServers` |
+| Only one subagent needs a business tool   | Put the server in that subagent's `mcpServers`, and use `tools` to limit callable tools                                  |
+| You only want to call a specific MCP tool | Also set `tools: ['mcp__server__tool']` to avoid exposing every tool from the server                                     |
+
+MCP server config structure: see [MCP](/cli/sdk/mcp) and the [Agents Reference](/cli/sdk/references).
+
+---
+
+<div id="invoking-subagents" />
+
+## Invoking Subagents
+
+Subagents have three common invocation modes.
+
+<div id="automatic-invocation" />
+
+### Automatic Invocation
+
+The model decides whether to call a subagent based on the task and each subagent's `description`. Clear descriptions improve routing accuracy.
+
+<CodeGroup>
+  ```typescript TypeScript
+  agents: {
+    tester: {
+      description: 'Runs tests and analyzes test failures.',
+      prompt: 'Run relevant tests and explain any failures clearly.',
+      tools: ['Bash', 'Read', 'Grep'],
+    },
+  }
+  ```
+
+  ```python Python
+  agents = {
+      "tester": AgentDefinition(
+          description="Runs tests and analyzes test failures.",
+          prompt="Run relevant tests and explain any failures clearly.",
+          tools=["Bash", "Read", "Grep"],
+      ),
+  }
+  ```
+</CodeGroup>
+
+<div id="explicit-invocation" />
+
+### Explicit Invocation
+
+If you want the model to use a specific subagent, name it in the prompt.
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    prompt: 'Use the tester agent to run the unit tests and summarize failures.',
+    options: {
+      // Pre-authorize Agent tool calls. If options.tools restricts the tool set, include 'Agent' there too.
+      allowedTools: ['Agent'],
+      agents: {
+        tester: {
+          description: 'Runs tests and analyzes failures.',
+          prompt: 'Run the requested tests and explain failures clearly.',
+          tools: ['Bash', 'Read', 'Grep'],
+        },
+      },
+    },
+  });
+  ```
+
+  ```python Python
+  async for message in query(
+      prompt="Use the tester agent to run the unit tests and summarize failures.",
+      options=QoderAgentOptions(
+          allowed_tools=["Agent"],
+          agents={
+              "tester": AgentDefinition(
+                  description="Runs tests and analyzes failures.",
+                  prompt="Run the requested tests and explain failures clearly.",
+                  tools=["Bash", "Read", "Grep"],
+              ),
+          },
+      ),
+  ):
+      print(message)
+  ```
+</CodeGroup>
+
+<div id="run-as-the-main-session-role-2" />
+
+### Run as the Main Session Role
+
+`options.agent` makes the main session run directly as a subagent identity.
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    prompt: 'Plan the refactor for the payment module.',
+    options: {
+      agents: {
+        planner: {
+          description: 'Plans implementation work before code changes.',
+          prompt: 'Break the task into clear steps, risks, and validation checks.',
+          tools: ['Read', 'Grep', 'Glob'],
+          model: 'inherit',
+        },
+      },
+      agent: 'planner',
+    },
+  });
+  ```
+
+  ```python Python
+  options = QoderAgentOptions(
+      agents={
+          "planner": AgentDefinition(
+              description="Plans implementation work before code changes.",
+              prompt="Break the task into clear steps, risks, and validation checks.",
+              tools=["Read", "Grep", "Glob"],
+              model="inherit",
+          ),
+      },
+      agent="planner",
+  )
+  ```
+</CodeGroup>
+
+`options.agent` can reference a custom subagent in `options.agents`, or a built-in, user, project, or plugin subagent discovered by the current CLI.
+
+---
+
+<div id="subagent-context-and-results" />
+
+## Subagent Context and Results
+
+A subagent runs in an independent context. It receives its own system prompt and delegation prompt, but it does not directly inherit the parent session's full history.
+
+| Subagent can see                                                    | Subagent cannot see                                        |
+| ------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Its own `prompt`                                                    | Full parent-session conversation history                   |
+| The task prompt passed by the main session through the `Agent` tool | Intermediate tool results from the parent session          |
+| Its own available tool definitions                                  | Parent session private reasoning that was not passed to it |
+| Skills preloaded by configuration                                   | Intermediate context from other Agents                     |
+
+The main channel for passing information from the parent session to a subagent is the task prompt passed when calling the Agent tool. If a subagent needs specific file paths, error messages, or business context, make the main session pass them explicitly during delegation.
+
+When a subagent completes, the parent session receives its final response, not the full context of every internal tool call. This is one of the main benefits of using subagents to isolate context.
+
+---
+
+<div id="combined-examples" />
+
+## Combined Examples
+
+<div id="multi-role-collaboration" />
+
+### Multi-role Collaboration
+
+Register multiple subagents with different roles. The main session decides whether and when to call them based on the task.
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    prompt: 'Add input validation to the user registration endpoint.',
+    options: {
+      // Pre-authorize Agent tool calls. If options.tools restricts the tool set, include 'Agent' there too.
+      allowedTools: ['Agent'],
+      agents: {
+        researcher: {
+          description: 'Reads existing code to understand patterns and constraints.',
+          prompt: 'Research relevant files and report implementation constraints. Do not edit.',
+          tools: ['Read', 'Grep', 'Glob'],
+          maxTurns: 8,
+        },
+        implementer: {
+          description: 'Implements code changes following existing project conventions.',
+          prompt: 'Implement the requested change with minimal, idiomatic edits.',
+          tools: ['Read', 'Edit', 'Write', 'Grep', 'Glob'],
+          maxTurns: 12,
+        },
+        tester: {
+          description: 'Runs tests and explains failures.',
+          prompt: 'Run relevant tests, summarize results, and identify failing cases.',
+          tools: ['Bash', 'Read', 'Grep'],
+          maxTurns: 6,
+        },
+      },
+    },
+  });
+  ```
+
+  ```python Python
+  options = QoderAgentOptions(
+      allowed_tools=["Agent"],
+      agents={
+          "researcher": AgentDefinition(
+              description="Reads existing code to understand patterns and constraints.",
+              prompt="Research relevant files and report implementation constraints. Do not edit.",
+              tools=["Read", "Grep", "Glob"],
+              maxTurns=8,
+          ),
+          "implementer": AgentDefinition(
+              description="Implements code changes following existing project conventions.",
+              prompt="Implement the requested change with minimal, idiomatic edits.",
+              tools=["Read", "Edit", "Write", "Grep", "Glob"],
+              maxTurns=12,
+          ),
+          "tester": AgentDefinition(
+              description="Runs tests and explains failures.",
+              prompt="Run relevant tests, summarize results, and identify failing cases.",
+              tools=["Bash", "Read", "Grep"],
+              maxTurns=6,
+          ),
+      },
+  )
+  ```
+</CodeGroup>
+
+<div id="automatically-run-the-first-task-after-startup" />
+
+### Automatically Run the First Task After Startup
+
+`initialPrompt` only takes effect when that subagent becomes the main session role through `options.agent`:
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    prompt: '',
+    options: {
+      agents: {
+        auditor: {
+          description: 'Audits code for security risks.',
+          prompt: 'Scan code for security risks and produce a concise report.',
+          initialPrompt: 'Start with the authentication and session management code.',
+          tools: ['Read', 'Grep', 'Glob'],
+          effort: 'high',
+        },
+      },
+      agent: 'auditor',
+    },
+  });
+  ```
+
+  ```python Python
+  options = QoderAgentOptions(
+      agents={
+          "auditor": AgentDefinition(
+              description="Audits code for security risks.",
+              prompt="Scan code for security risks and produce a concise report.",
+              initialPrompt="Start with the authentication and session management code.",
+              tools=["Read", "Grep", "Glob"],
+              effort="high",
+          ),
+      },
+      agent="auditor",
+  )
+
+  async for message in query(prompt="", options=options):
+      print(message)
+  ```
+</CodeGroup>
+
+If `auditor` is called as a subagent through the main session's `Agent` tool, `initialPrompt` is ignored.
+
+---
+
+<div id="common-pitfalls" />
+
+## Common Pitfalls
+
+- When directly using a built-in subagent, do not redefine a subagent with the same name in `options.agents` unless you intentionally want to override it.
+- Calling subagents relies on the main session's `Agent` tool. `Agent` in the allowlist is the pre-approval; when restricting with `options.tools`, include `Agent` as well.
+- Subagent names are case-sensitive and must match the discovered result, such as `Explore` and `Plan` with capitalized first letters.
+- `description` tells the model when to call the subagent; `prompt` tells the subagent what to do after it is called.
+- Subagents cannot spawn their own subagents. Do not put `Agent` in a subagent's `tools`.
+- `initialPrompt` only takes effect for the main session role specified by `options.agent`; it is ignored when the agent is delegated to as a subagent.
+- Dedicated MCP servers for subagents can be configured through `mcpServers`; see [MCP](/cli/sdk/mcp) for MCP connection methods.
+- In Python, `AgentDefinition` field names are camelCase, not snake\_case.
+
+---
+
+<div id="continue-reading" />
+
+## Continue Reading
+
+- [Agents Reference](/cli/sdk/references): Complete reference for `AgentDefinition`, `AgentInfo`, `options.agent`, and `options.agents`.
+- [Tools](/cli/sdk/tools): Built-in tools, custom tools, and tool permissions.
+- [Permissions](/cli/sdk/permissions): permission modes, tool allowlists, and permission callbacks.
+- [Skills](/cli/sdk/skills): Session-level and subagent-level skill configuration.
+
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.qoder.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Skills
+
+In this page, the "main session" is the session driven directly by `query()` (or Python's `QoderSDKClient`, or Java's `QoderClient.query()` / `openSession()`), as opposed to subagents delegated via the `Agent` tool. See [Subagents](/cli/sdk/agents) for how the two relate.
+
+`options.skills` (TypeScript, Python) controls the main session's skill context and the `Skill` tool invocation policy. With a list of strings, the SDK issues the main-session skill allowlist and compiles each entry into `Skill(name)` merged into the tool allowlist (`allowedTools` / `allowed_tools`); with `'all'`, all discovered skills may be invoked and the main-session context is not additionally filtered.
+
+The Java SDK has no `skills`, `settingSources`, `plugins`, or `agents` option. It provides [per-message Skill selection](#activating-user-selected-skills) and [runtime refresh](#refreshing-skills-in-a-running-query).
+
+<div id="sdk-does-not-load-built-in-skills" />
+
+## SDK Does Not Load Built-in Skills (TypeScript, Python)
+
+The SDK **always** appends `--disable-builtin-skills` when launching the CLI, so sessions never get the CLI's factory built-in skills (`simplify`, `debug`, `security-review`, `quest`, `batch`, `agent-creator`, `hook-config`, `mcp-config`, `skill-creator`, etc.). The discovery list (TypeScript's `initializationResult().skills`, Python's `get_server_info()['skills']`) contains no `source: 'built-in'` entries either, and the model system prompt can't see them.
+
+This is fixed SDK behavior with no opt-in; if you want the capability of a CLI built-in skill, either ship your own copy of the SKILL.md via a plugin / user dir / project dir, or run the CLI directly outside the SDK.
+
+The session can still pick up skills contributed from these sources:
+
+- **plugin skills**: loaded via `options.plugins`, addressed with the plugin-qualified name (`plugin:skill`).
+- **User / project skills**: discovered after explicitly enabling `user` / `project` / `local` via the setting sources option.
+- **agent-preloaded skills**: declared on `options.agents[name].skills`, scoped to that sub-agent only.
+
+To know reliably which skills the session discovered, read the discovery list at runtime instead of hard-coding the set.
+
+The Java SDK does not append `--disable-builtin-skills` when launching the CLI.
+
+---
+
+<div id="using-cli-default-policy" />
+
+## Using CLI Default Policy (TypeScript, Python)
+
+Without `skills`, the SDK injects no extra `Skill` allowlist and defers entirely to CLI policy. Since built-in skills are disabled, sessions without setting sources / plugins have an empty discovery list.
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { query } from '@qoder-ai/qoder-agent-sdk';
+
+  const q = query({
+    prompt: 'Analyze the test coverage of this project',
+    options: {
+      cwd: '/path/to/project',
+    },
+  });
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import query, QoderAgentOptions
+
+  async for msg in query(
+      prompt="Analyze the test coverage of this project",
+      options=QoderAgentOptions(cwd="/path/to/project"),
+  ):
+      print(msg)
+  ```
+</CodeGroup>
+
+<div id="enabling-all-discovered-skills" />
+
+## Enabling All Discovered Skills (TypeScript, Python)
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    prompt: 'Use an appropriate skill to perform a code review',
+    options: {
+      cwd: '/path/to/project',
+      settingSources: ['project'],
+      skills: 'all',
+    },
+  });
+  ```
+
+  ```python Python
+  async for msg in query(
+      prompt="Use an appropriate skill to perform a code review",
+      options=QoderAgentOptions(
+          cwd="/path/to/project",
+          setting_sources=["project"],
+          skills="all",
+      ),
+  ):
+      print(msg)
+  ```
+</CodeGroup>
+
+`skills` set to `'all'` lets the `Skill` tool invoke every skill the CLI currently discovers (sources determined by setting sources / plugins; built-ins are no longer included).
+
+<div id="enabling-only-specific-skills" />
+
+## Enabling Only Specific Skills (TypeScript, Python)
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    prompt: 'Use the review skill to inspect recent changes',
+    options: {
+      cwd: '/path/to/project',
+      settingSources: ['project'],
+      skills: ['review'],
+    },
+  });
+  ```
+
+  ```python Python
+  async for msg in query(
+      prompt="Use the review skill to inspect recent changes",
+      options=QoderAgentOptions(
+          cwd="/path/to/project",
+          setting_sources=["project"],
+          skills=["review"],
+      ),
+  ):
+      print(msg)
+  ```
+</CodeGroup>
+
+With a string list, only matching skills appear in the main model's skill listing and can be invoked through the `Skill` tool. Entries may be bare or plugin-qualified names. Passing an empty list `[]` hides and rejects every skill in the main session.
+
+The list doesn't change CLI discovery; unlisted skills may still appear in the [discovery list](#reading-skills-discovered-in-the-current-session).
+
+<div id="enabling-plugin-skills" />
+
+## Enabling Plugin Skills (TypeScript, Python)
+
+Plugin skills use the plugin-qualified name `plugin:skill`. For plugin loading methods, see [Plugins documentation](/cli/sdk/plugins).
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    prompt: 'Use the echo skill provided by the plugin to handle this input',
+    options: {
+      plugins: [{ type: 'local', path: '/path/to/sdk-test-plugin' }],
+      skills: ['sdk-test-plugin:sdk-echo'],
+    },
+  });
+  ```
+
+  ```python Python
+  async for msg in query(
+      prompt="Use the echo skill provided by the plugin to handle this input",
+      options=QoderAgentOptions(
+          plugins=[{"type": "local", "path": "/path/to/sdk-test-plugin"}],
+          skills=["sdk-test-plugin:sdk-echo"],
+      ),
+  ):
+      print(msg)
+  ```
+</CodeGroup>
+
+<div id="merging-with-explicit-tool-allowlist" />
+
+## Merging with Explicit Tool Allowlist (TypeScript, Python)
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    prompt: 'Read the source and use the review skill to produce a list of issues',
+    options: {
+      cwd: '/path/to/project',
+      settingSources: ['project'],
+      allowedTools: ['Read', 'Grep'],
+      skills: ['review'],
+    },
+  });
+  ```
+
+  ```python Python
+  async for msg in query(
+      prompt="Read the source and use the review skill to produce a list of issues",
+      options=QoderAgentOptions(
+          cwd="/path/to/project",
+          setting_sources=["project"],
+          allowed_tools=["FileRead", "Grep"],
+          skills=["review"],
+      ),
+  ):
+      print(msg)
+  ```
+</CodeGroup>
+
+The configuration above ultimately allows the listed read/search tools plus `Skill(review)`. The SDK merges and dedupes—no duplicate entries are written.
+
+<div id="hiding-discovered-skills" />
+
+## Hiding Discovered Skills (TypeScript, Python)
+
+The string-list form of `options.skills` filters the main-session model context and restricts `Skill` tool calls, but doesn't change discovery results. To hide a plugin / user / project skill from the discovery list as well, use [settings.skillOverrides](/cli/sdk/references).
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    prompt: 'Handle this task',
+    options: {
+      plugins: [{ type: 'local', path: '/path/to/sdk-test-plugin' }],
+      settings: {
+        skillOverrides: {
+          'sdk-test-plugin:sdk-echo': 'off',
+        },
+      },
+    },
+  });
+  ```
+
+  ```python Python
+  options = QoderAgentOptions(
+      plugins=[{"type": "local", "path": "/path/to/sdk-test-plugin"}],
+      settings={
+          "skillOverrides": {
+              "sdk-test-plugin:sdk-echo": "off",
+          },
+      },
+  )
+  ```
+</CodeGroup>
+
+- `'off'`: fully hidden—absent from the discovery list and the model system prompt, and `Skill` tool calls are rejected.
+- Other values: `'on'` (default), `'name-only'` (only shows name, not description), `'user-invocable-only'` (invisible to model, user can still trigger via `/name`).
+- Scope of effect: every SDK-visible source (plugin, user, project, …) respects this override; CLI built-ins are already blocked by `--disable-builtin-skills`, so overrides for them have nothing to act on.
+- Key naming rules: Plugin skills use the plugin-qualified name `plugin:skill`; non-plugin skills use bare names. Both forms can be written simultaneously; matching is attempted against the fully qualified name first, then falls back to the bare name.
+
+> `options.skills` can hide the main session's model context but doesn't filter the discovery list; to hide from the discovery list too, use `skillOverrides: { name: 'off' }`.
+
+---
+
+<div id="activating-user-selected-skills" />
+
+## Activating User-selected Skills for One Message
+
+A TypeScript host that renders a Skill picker can attach the user's selections to one streamed [`SDKUserMessage`](/cli/sdk/references-typescript#sdkusermessage). A Java host calls `selectedSkills(...)` on [`UserInput.Builder`](/cli/sdk/references-java#userinputbuilder), with one [`SelectedSkill`](/cli/sdk/references-java#selectedskill) per selection. The CLI activates them as direct user intent before processing that message; the model does not need to decide to call the `Skill` tool.
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { query, type SDKUserMessage } from '@qoder-ai/qoder-agent-sdk';
+
+  async function* messages(): AsyncGenerator<SDKUserMessage> {
+    yield {
+      type: 'user',
+      message: {
+        role: 'user',
+        content: [{ type: 'text', text: 'Review this change and keep the explanation concise.' }],
+      },
+      parent_tool_use_id: null,
+      client_composed: true,
+      selected_skills: [
+        { name: 'review' },
+        { name: 'explain', arguments: '--concise' },
+      ],
+    };
+  }
+
+  const q = query({
+    prompt: messages(),
+    options: {
+      cwd: '/path/to/project',
+      settingSources: ['project'],
+    },
+  });
+  ```
+
+  ```java Java
+  UserInput input = UserInput.builder()
+          .addText("Review this change and keep the explanation concise.")
+          .clientComposed(true)
+          .selectedSkills(Arrays.asList(
+                  SelectedSkill.of("review"),
+                  SelectedSkill.of("explain", "--concise")))
+          .build();
+
+  QoderQuery query = client.query(OneShotQueryRequest.builder()
+          .input(input)
+          .options(SessionOptions.builder()
+                  .workingDirectory(Paths.get("/path/to/project"))
+                  .build())
+          .build());
+  ```
+</CodeGroup>
+
+`selected_skills` is message-scoped and does not change the session-wide `options.skills` model visibility and `Skill` tool policy. Direct user selection is a separate path, so a selected Skill does not need to appear in the `options.skills` list. Each entry contains the discovered Skill name and optional raw `arguments`. Multiple selections are activated before the owning user text. A selected Skill must still be enabled, user-invocable, and compatible with inline activation; disabled, missing, fork-context, and workflow Skills are rejected. `disable-model-invocation: true` only blocks model-originated `Skill` tool calls, so it does not block this explicit user selection.
+
+Set `client_composed: true` (`clientComposed(true)` in Java) when the host UI has already resolved slash-command intent. In that case, leading `/` text remains literal input rather than being parsed again as a CLI command. Do not set it merely because `selected_skills` is present if the CLI should still parse slash commands in the text.
+
+Non-empty `selected_skills` requires a CLI that declares `selected_skills_v1`. With an older CLI, the SDK rejects the input with `UnsupportedCliCapabilityError` (`UnsupportedCliCapabilityException` in Java) instead of silently dropping the selections. This message-level API is currently provided by the TypeScript and Java SDKs.
+
+---
+
+<div id="reading-skills-discovered-in-the-current-session" />
+
+## Reading Skills Discovered in the Current Session (TypeScript, Python)
+
+The initialization result contains the full skill list the CLI discovered in this session, unfiltered by the string-list form of `options.skills`. It suits host UIs showing "discovered skills" and is not the main session's current invocable list. In Python, `query()` is a one-shot stream with no convenient query API—use `QoderSDKClient` to read it after the handshake.
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    prompt: 'Do not execute any task yet',
+    options: {
+      cwd: '/path/to/project',
+      settingSources: ['project'],
+      skills: 'all',
+    },
+  });
+
+  const init = await q.initializationResult();
+  console.log(init.skills?.map((skill) => skill.name));
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import QoderAgentOptions, QoderSDKClient
+
+  options = QoderAgentOptions(
+      cwd="/path/to/project",
+      setting_sources=["project"],
+      skills="all",
+  )
+
+  async with QoderSDKClient(options) as client:
+      info = await client.get_server_info()
+      if info:
+          for skill in info.get("skills", []):
+              print(skill["name"], skill.get("source"))
+  ```
+</CodeGroup>
+
+> A string-list `skills` controls main-session context and tool visibility; it is not a security boundary. Unlisted skills do not appear in the model's skill listing and cannot be invoked through the `Skill` tool, but their files remain on disk and can still be accessed by regular file tools.
+
+---
+
+<div id="refreshing-skills-in-a-running-query" />
+
+## Refreshing Skills in a Running Query
+
+If a Skill is installed, removed, or changed while a TypeScript `Query` or a Java `QoderSession` is running, rescan the connected CLI without restarting the session:
+
+<CodeGroup>
+  ```typescript TypeScript
+  const { skills } = await q.reloadSkills();
+  renderSkills(skills);
+  ```
+
+  ```java Java
+  List<CommandInfo> skills = session.reloadSkills().toCompletableFuture().join();
+  renderSkills(skills);
+  ```
+</CodeGroup>
+
+`skills` is the complete replacement snapshot of displayable, user-invocable Skills. Replace the previously rendered Skill list instead of merging it. The response intentionally excludes non-Skill plugin commands. `reloadSkills()` requires the CLI capability `reload_skills_v1`; an unsupported CLI rejects with `UnsupportedCliCapabilityError` (`UnsupportedCliCapabilityException` in Java). It only rescans Skills—use `q.reloadPlugins()` if other plugin resources must also be refreshed.
+
+The command catalog is broader than Skills. To keep a command UI current, continue consuming the `Query` and replace the local catalog whenever it emits `system/commands_changed`; `q.supportedCommands()` then returns the same latest complete snapshot. This event does not say which source changed, so it cannot by itself identify a Skill installation. The TypeScript SDK negotiates the event automatically. A direct JSONL process integration must set `supportsCommandsChanged: true` in its initialize request and continue reading messages after each model result.
+
+The Java SDK also negotiates this event automatically. Keep reading the `QoderSession` message stream, and when a `CommandsChangedMessage` arrives, replace the local command catalog with its `commands()`. `session.supportedCommands()` then returns the command names from the same latest snapshot. The Skill list returned by `reloadSkills()` does not replace the command catalog.
+
+The Python SDK does not currently provide an equivalent runtime refresh API. Its discovery list remains available from `get_server_info()['skills']` after initialization.
+
+---
+
+<div id="custom-agent-preloading-skills" />
+
+## Custom Agent Preloading Skills (TypeScript, Python)
+
+If you define custom sub-Agents via `options.agents`, you can declare `skills` in the Agent definition. When the main session invokes the `Agent` tool, the sub-Agent will run with the specified skills loaded.
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    prompt: 'Dispatch a helper agent that uses the sdk-agent-marker skill to return the marker',
+    options: {
+      cwd: '/path/to/project',
+      allowedTools: ['Agent'],
+      agents: {
+        'sdk-skill-helper': {
+          description: 'Invoke when the sdk-agent-marker skill is needed.',
+          prompt: 'You are a helper agent that only reads and runs the specified skill.',
+          skills: ['sdk-agent-marker'],
+          maxTurns: 2,
+        },
+      },
+    },
+  });
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import AgentDefinition, QoderAgentOptions
+
+  options = QoderAgentOptions(
+      cwd="/path/to/project",
+      allowed_tools=["Agent"],
+      agents={
+          "sdk-skill-helper": AgentDefinition(
+              description="Invoke when the sdk-agent-marker skill is needed.",
+              prompt="You are a helper agent that only reads and runs the specified skill.",
+              skills=["sdk-agent-marker"],
+              maxTurns=2,
+          ),
+      },
+  )
+  ```
+</CodeGroup>
+
+Such `skills` only affect that agent's context and don't enable the same skills for the main session—the main session's tool allowlist is untouched by this change.
+
+---
+
+<div id="options-reference" />
+
+## Options Reference (TypeScript, Python)
+
+| Field (TypeScript / Python)          | Description                                                                                                               |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `skills` / `skills`                  | List restricts the main session's skill context and invocation; `[]` disables all; `'all'` enables every discovered skill |
+| `agents` / `agents`                  | Custom agents; an agent definition can declare its own `skills` preload list                                              |
+| `allowedTools` / `allowed_tools`     | Tool allowlist; merged and deduped with `Skill(...)` entries compiled from `skills`                                       |
+| `settingSources` / `setting_sources` | Decides whether the CLI scans user / project directories for skills (default empty = sandboxed)                           |
+| `plugins` / `plugins`                | Loads plugins; their skills join the discovery set                                                                        |
+
+`settings` also has several skill-related fields that the SDK passes through; actual effects depend on whether the CLI version implements them:
+
+| Field                        | Purpose                                                                                                                             |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `skillOverrides`             | Set `'on' \                                                                                                                         | 'name-only' \ | 'user-invocable-only' \ | 'off'` per skill name; plugin, user, project sources all respect this override |
+| `skillListingMaxDescChars`   | Character limit per description in the skill listing; the SDK passes it through and the default depends on the CLI version          |
+| `skillListingBudgetFraction` | Context-window fraction reserved for the skill listing; the SDK passes it through and the default depends on the CLI version        |
+
+---
+
+<div id="return-value-reference" />
+
+## Return Value Reference (TypeScript, Python)
+
+<CodeGroup>
+  ```typescript TypeScript
+  type SDKControlInitializeResponse = {
+    skills?: Array<{ name: string; description?: string; source?: string }>;
+    // ...also returns commands / agents / models and similar fields
+  };
+  ```
+
+  ```python Python
+  # The dict returned by client.get_server_info() includes:
+  {
+      "commands": [{"name": str, "description": str, ...}, ...],
+      "agents": [{"name": str, "description": str, "model": str | None}, ...],
+      "skills": [{"name": str, "description": str | None, "source": str | None}, ...],
+      # Also includes models / account / output_style and other fields
+  }
+  ```
+</CodeGroup>
+
+Only skill-related fields are shown; full type in [SDK References](/cli/sdk/references). In Python, the streaming `SystemMessage(subtype="init").data["skills"]` is a list of skill names—not the same structure as this metadata-rich discovery list.
+
+---
+
+<div id="best-practices" />
+
+## Best Practices
+
+- **Enable `skills` deliberately**: `'all'` suits development and debugging; end-user products should usually pass an explicit list.
+- **Recreate built-in skill behavior yourself if you want it**: the SDK won't inject `simplify` / `security-review` into sessions; provide your own SKILL.md within plugin or setting-sources scope.
+- **Don't treat `skills` as a sandbox**: security boundaries belong to tool allow/deny lists, the permission callback, permission modes, and sandboxing combined.
+- **Use the right UI snapshot**: `initializationResult().skills` / `get_server_info()['skills']` is the initial discovery list, not the main session's invocable set. In TypeScript, replace a running Skill UI from `q.reloadSkills().skills` and update a command UI from `commands_changed`. In Java, use the result of `session.reloadSkills()` and `CommandsChangedMessage` respectively.
+- **Manage sub-Agent `skills` separately**: They are independent lists from the main session's `options.skills` and do not override each other.
+
+---
+
+<div id="current-limitations" />
+
+## Current Limitations
+
+- `--disable-slash-commands` is the CLI's switch to disable all slash-command skills at once; the SDK currently exposes no first-class option—avoid relying on non-public passthrough paths.
+- `settings.skillListingMaxDescChars` and `settings.skillListingBudgetFraction` are listing-budget control fields that the SDK passes through; the current qodercli has not implemented listing budget control, so passing them does not raise an error but also does not change behavior.
+- Runtime Skill refresh is currently supported in TypeScript and Java. The Python SDK has no `client.supported_skills()` convenience method; read the initialization discovery list from `get_server_info()['skills']` instead.
+
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.qoder.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Plugins
+
+`options.plugins` is used to load local plugin directories into the current session. The SDK converts each local plugin into a `--plugin-dir <path>` startup argument; commands, agents, skills, and MCP servers contained in the plugin all take part in capability discovery for the session.
+
+**Language availability: TypeScript, Python.**
+
+The Java SDK has no `plugins` option. [`QoderSession.reloadPlugins()`](/cli/sdk/references-java#qodersession) returns `CompletionStage<Void>` and does not return the refreshed plugin list.
+
+<div id="loading-local-plugins" />
+
+## Loading Local Plugins
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { query } from '@qoder-ai/qoder-agent-sdk';
+
+  const q = query({
+    prompt: 'List the commands and agents contributed by the current plugins',
+    options: {
+      plugins: [
+        { type: 'local', path: '/path/to/my-plugin' },
+      ],
+    },
+  });
+
+  const init = await q.initializationResult();
+  console.log(init.commands);
+  console.log(init.agents);
+  console.log(init.skills);
+
+  const plugins = await q.listPlugins();
+  console.log(plugins);
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import QoderAgentOptions, QoderSDKClient
+
+  options = QoderAgentOptions(
+      plugins=[
+          {"type": "local", "path": "/path/to/my-plugin"},
+      ],
+  )
+
+  async with QoderSDKClient(options) as client:
+      info = await client.get_server_info()
+      print(info.get("commands"))
+      print(info.get("agents"))
+      print(info.get("skills"))
+
+      plugins = await client.list_plugins()
+      print(plugins)
+  ```
+</CodeGroup>
+
+You can pass multiple local plugins at once; multiple `--plugin-dir` arguments will be written in order:
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    options: {
+      plugins: [
+        { type: 'local', path: '/path/to/plugin-a' },
+        { type: 'local', path: '/path/to/plugin-b' },
+      ],
+    },
+  });
+  ```
+
+  ```python Python
+  options = QoderAgentOptions(
+      plugins=[
+          {"type": "local", "path": "/path/to/plugin-a"},
+          {"type": "local", "path": "/path/to/plugin-b"},
+      ],
+  )
+  ```
+</CodeGroup>
+
+> 💡 In Python, `query()` is a one-shot message stream and can't query the init response after the handshake. To read plugin-contributed commands / agents / skills, use `QoderSDKClient` and call `get_server_info()` after `connect()`, or capture `SystemMessage(subtype='init')` in the stream and read `message.data` yourself. For the full plugin inventory, call `client.list_plugins()`.
+
+---
+
+<div id="plugin-directory-layout" />
+
+## Plugin Directory Layout
+
+A local plugin typically contains:
+
+```
+my-plugin/
+  .qoder-plugin/plugin.json
+  commands/
+  agents/
+  skills/
+  .mcp.json
+```
+
+`.qoder-plugin/plugin.json` declares the plugin name, version, and description. The other directories are automatically scanned by the CLI based on file type.
+
+The SDK does not validate whether the path exists or is well-formed:
+
+- A non-existent `--plugin-dir` path is silently ignored in SDK mode; the session still initializes normally.
+- Broken frontmatter or `.mcp.json` does not block init; broken commands simply do not appear in the init response.
+- To diagnose plugin load failures explicitly, the only fallback today is the [post-reload error\_count](#reloading-plugins-at-runtime).
+
+---
+
+<div id="plugin-contributed-slash-commands" />
+
+## Plugin-contributed Slash Commands
+
+`commands/*.md` in a plugin appears in the initialization result, named in the `<plugin>:<cmd>` qualified form:
+
+<CodeGroup>
+  ```typescript TypeScript
+  const commands = await q.supportedCommands();
+  console.log(commands.map((cmd) => cmd.name));
+  ```
+
+  ```python Python
+  async with QoderSDKClient(options) as client:
+      info = await client.get_server_info()
+      for cmd in info.get("commands", []):
+          print(cmd["name"], cmd.get("description"))
+  ```
+</CodeGroup>
+
+<div id="plugin-contributed-agents" />
+
+## Plugin-contributed Agents
+
+`agents/*.md` in a plugin appears in the initialization result; the SDK offers a convenience method to fetch the list:
+
+<CodeGroup>
+  ```typescript TypeScript
+  const agents = await q.supportedAgents();
+  console.log(agents.map((agent) => agent.name));
+  ```
+
+  ```python Python
+  async with QoderSDKClient(options) as client:
+      for agent in client.supported_agents():
+          print(agent["name"], agent.get("description"))
+  ```
+</CodeGroup>
+
+<div id="plugin-contributed-skills" />
+
+## Plugin-contributed Skills
+
+`skills/<name>/SKILL.md` in a plugin is registered under the plugin-qualified name (`plugin:skill`). Control its main-session context visibility and invocation policy via `options.skills`: pass qualified names to enable specific skills, `'all'` to enable all discovered ones, or omit for CLI default policy. See the [Skills docs](/cli/sdk/skills#enabling-plugin-skills).
+
+<div id="plugin-contributed-mcp-servers" />
+
+## Plugin-contributed MCP Servers
+
+`.mcp.json` in a plugin is launched by the CLI and included in MCP status:
+
+<CodeGroup>
+  ```typescript TypeScript
+  const servers = await q.mcpServerStatus();
+  console.log(servers);
+  ```
+
+  ```python Python
+  async with QoderSDKClient(options) as client:
+      status = await client.get_mcp_status()
+      for server in status["mcpServers"]:
+          print(server["name"], server["status"])
+  ```
+</CodeGroup>
+
+---
+
+<div id="temporarily-overriding-an-installed-plugin-with-the-same-name" />
+
+## Temporarily Overriding an Installed Plugin with the Same Name
+
+Plugins loaded via `options.plugins` are session-scoped. During the current session, if a local plugin shares a name with an installed plugin, the local plugin takes priority in capability discovery. This is useful for plugin development, debugging, and canary testing.
+
+<CodeGroup>
+  ```typescript TypeScript
+  const q = query({
+    options: {
+      // The local version only takes effect for this query session and does not
+      // touch the user's global install state.
+      plugins: [{ type: 'local', path: './my-plugin-dev' }],
+    },
+  });
+  ```
+
+  ```python Python
+  options = QoderAgentOptions(
+      # The local version only takes effect for this query session and does not
+      # touch the user's global install state.
+      plugins=[{"type": "local", "path": "./my-plugin-dev"}],
+  )
+  ```
+</CodeGroup>
+
+---
+
+<div id="reloading-plugins-at-runtime" />
+
+## Reloading Plugins at Runtime
+
+When the plugin directory changes, call `reloadPlugins()` / `reload_plugins()` within the same session to have the CLI rescan plugin resources.
+
+<CodeGroup>
+  ```typescript TypeScript
+  const refreshed = await q.reloadPlugins();
+
+  console.log(refreshed.commands);
+  console.log(refreshed.agents);
+  console.log(refreshed.plugins);
+  console.log(refreshed.mcpServers);
+  console.log(refreshed.error_count);
+  ```
+
+  ```python Python
+  async with QoderSDKClient(options) as client:
+      refreshed = await client.reload_plugins()
+
+      print(refreshed["commands"])
+      print(refreshed["agents"])
+      print(refreshed["plugins"])
+      print(refreshed["mcpServers"])
+      print(refreshed["error_count"])
+  ```
+</CodeGroup>
+
+Typical use cases:
+
+- Refreshing after adding or deleting `commands/*.md` during plugin development.
+- After installing or updating a local plugin without restarting the host application.
+- When the host UI needs to display commands, agents, plugins, and MCP status after a reload.
+
+> Note: in Python, `reload_plugins()` is only meaningful in `QoderSDKClient` (streaming) mode; the one-shot `query()` stream has no runtime control channel.
+
+---
+
+<div id="manage-installed-plugins-typescript" />
+
+## Managing Installed Plugins (TypeScript)
+
+The TypeScript SDK provides top-level functions for validating, listing, installing, uninstalling, enabling, and disabling plugins without creating an active query:
+
+```typescript
+import {
+  disablePlugin,
+  enablePlugin,
+  installPlugin,
+  listPlugins,
+  uninstallPlugin,
+  validatePlugin,
+} from '@qoder-ai/qoder-agent-sdk';
+
+const cwd = '/path/to/project';
+const pluginPath = '/path/to/project/my-plugin';
+const report = await validatePlugin(pluginPath);
+const plugins = await listPlugins({ cwd });
+
+if (report.valid) {
+  const installed = await installPlugin(pluginPath, {
+    scope: 'project',
+    cwd,
+  });
+
+  await disablePlugin(installed.pluginId, { scope: 'project', cwd });
+  await enablePlugin(installed.pluginId, { scope: 'project', cwd });
+
+  await uninstallPlugin(installed.pluginId, {
+    scope: 'project',
+    cwd,
+    keepData: true,
+  });
+}
+```
+
+`installPlugin()` and `uninstallPlugin()` support `user`, `project`, and `local` scopes. The default is `user`. Pass `cwd` with `project` or `local` to identify the workspace to modify:
+
+| Scope     | Behavior                                                                                   |
+| --------- | ------------------------------------------------------------------------------------------ |
+| `user`    | Available to the current user across projects; the default                                 |
+| `project` | Writes project settings under `cwd`; the configuration can be committed to version control |
+| `local`   | Writes local project settings under `cwd`; intended only for the current machine           |
+
+`installPlugin()` returns `{ pluginId, version, path }`. `uninstallPlugin()` returns `{ pluginId, fullyRemoved, reverseDependents }`; set `keepData: true` to preserve the plugin data directory.
+
+The top-level `listPlugins()` function returns every installation reported by the paired qodercli. `projectPath` is populated only for project and local rows when supplied by the CLI; user and other non-project rows omit it. The `enabled` field reflects the effective state in `cwd`, or in the SDK process's current working directory when `cwd` is omitted. The session method `q.listPlugins()` returns the plugins actually loaded in that session.
+
+These functions execute through the paired qodercli. Errors have a stable `code` property.
+
+If a session is already running, call `q.reloadPlugins()` after installing, uninstalling, enabling, or disabling a plugin to apply the change to that session.
+
+---
+
+<div id="options-reference" />
+
+## Options Reference
+
+| Field (TypeScript / Python)          | Description                                                                             |
+| ------------------------------------ | --------------------------------------------------------------------------------------- |
+| `plugins` / `plugins`                | Loads local plugin directories; `{ type: 'local', path }` is the common form            |
+| `settings` / `settings`              | Settings passed through to the CLI; may include `enabledPlugins`, `pluginConfigs`, etc. |
+| `settingSources` / `setting_sources` | Controls which settings sources the CLI reads                                           |
+
+Use `settings.enabledPlugins` to control plugin enablement and `settings.pluginConfigs` to supply plugin config such as MCP server replacements.
+
+---
+
+<div id="return-value-reference" />
+
+## Return Value Reference
+
+<div id="initializationresult" />
+
+<div id="clientget-server-info-and-systemmessagesubtypeinitdata" />
+
+### Initialization result
+
+`initializationResult()` (TypeScript) / `client.get_server_info()` (Python) returns the commands, agents, skills, and other initialization resources discovered in the session. It has no stable plugin-inventory field; full return type in [SDK References](/cli/sdk/references).
+
+```python
+{
+    "commands": [
+        {"name": "plugin-a:greet", "description": "...", "argumentHint": "..."},
+        ...
+    ],
+    "agents": [
+        {"name": "plugin-a:helper", "description": "...", "model": "sonnet"},
+        ...
+    ],
+    "skills": [
+        {"name": "plugin-a:echo", "description": "...", "source": "plugin"},
+        ...
+    ],
+    # Also includes models / account / output_style and other fields
+}
+```
+
+<div id="listplugins" />
+
+<div id="clientlist-plugins" />
+
+### Listing plugins in the current session
+
+<CodeGroup>
+  ```typescript TypeScript
+  q.listPlugins(): Promise<PluginDetails[]>;
+  ```
+
+  ```python Python
+  plugins = await client.list_plugins()
+  ```
+</CodeGroup>
+
+Reads the plugins actually loaded in the current session with a resource summary per plugin. Host UIs showing the current session's plugin inventory should use this method rather than the `plugins` field of the initialization result. Use the top-level `listPlugins()` function to list installed plugins without creating a session.
+
+Each item is a `PluginDetails` object with `id`, `name`, `source`, `path`, `version`, `scope`, `enabled`, `canDisable`, and a `resources` summary grouped into `skills`, `agents`, `mcpServers`, `commands`, and `hooks`.
+
+<div id="reloadplugins" />
+
+<div id="clientreload-plugins" />
+
+### Reloading plugins
+
+`reloadPlugins()` / `reload_plugins()` returns:
+
+```typescript
+type SDKControlReloadPluginsResponse = {
+  commands: Array<{ name: string; description?: string; argumentHint?: string }>;
+  agents: Array<{ name: string; description?: string }>;
+  plugins: Array<{ name: string; path: string; source?: string }>;
+  mcpServers: Array<Record<string, unknown>>;
+  error_count: number;  // Number of plugins that failed to load in this reload
+};
+```
+
+---
+
+<div id="best-practices" />
+
+## Best Practices
+
+- **Separate initialization resources from the plugin inventory**: show discovered commands/agents/skills from the initialization result; use `q.listPlugins()` / `client.list_plugins()` for the current session's plugin inventory and top-level `listPlugins()` for installed plugins. The skills there are a discovery list, not the main session's invocable set.
+- **Use `options.plugins` during plugin development**: It only affects the current session without modifying the user's global install state.
+- **Prepare user messaging before reloads**: a reload rescans the disk and may briefly change the available resource lists—keep the UI in sync.
+- **Check `error_count` for diagnostics**: If `error_count > 0` after reload, some plugin resources failed to load; display the source to the user.
+
+---
+
+<div id="current-limitations" />
+
+## Current Limitations
+
+- On some qodercli versions, a local plugin's commands, agents, and MCP appear in the initialization result while its skills may be missing from the discovery list—a CLI-side discovery issue.
+- In the current qodercli implementation, nonexistent `--plugin-dir` paths are silently ignored in SDK mode; the only explicit diagnostic today is the post-reload `error_count`.
+- Reload is a runtime control API exposed by the SDK; if your CLI version returns internal `this._plugins` errors, upgrade to a fixed qodercli.
+
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.qoder.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Model Selection
+
+`query()` offers two model-selection modes:
+
+- **Fixed model (default)**: the entire session uses one model.
+- **Dynamic selection**: a callback is called before every LLM request to return the model. You can route by purpose (main conversation, sub-agent, context compaction, etc.).
+
+The two modes are mutually exclusive: passing the callback switches to dynamic-selection mode and the fixed-model setting is ignored.
+
+In Java, pick one of three options with `SessionOptions.Builder.modelSelection(...)`. `ModelSelection.staticModel(...)` is the fixed model. Dynamic selection has two callback styles: `ModelSelection.dynamic(...)` returns only a model ID, and `ModelSelection.policy(...)` returns a structured result that can carry parameters or keep the CLI's current model. The callback runs only when the CLI needs to choose a model, never during initialization.
+
+<div id="fixed-model" />
+
+## Fixed model
+
+Specify it via the model option; omit to use the account default:
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { qodercliAuth, query } from '@qoder-ai/qoder-agent-sdk';
+
+  const q = query({
+    prompt: 'Analyze this code',
+    options: {
+      auth: qodercliAuth(),
+      model: 'performance',
+    },
+  });
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import query, QoderAgentOptions
+
+  options = QoderAgentOptions(model="performance")
+
+  async for msg in query(prompt="Analyze this code", options=options):
+      print(msg)
+  ```
+
+  ```java Java
+  SessionOptions options = SessionOptions.builder()
+          .modelSelection(ModelSelection.staticModel(ModelId.of("performance")))
+          .build();
+
+  QoderQuery query = client.query(OneShotQueryRequest.builder()
+          .prompt("Analyze this code")
+          .options(options)
+          .build());
+  ```
+</CodeGroup>
+
+<div id="dynamic-selection" />
+
+## Dynamic selection
+
+Provide a callback function that is invoked before every LLM request:
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { qodercliAuth, query, type ModelPolicyProvider } from '@qoder-ai/qoder-agent-sdk';
+
+  const resolveModel: ModelPolicyProvider = (context) => {
+    return { model: 'performance' };
+  };
+
+  const q = query({
+    prompt: 'Analyze this code',
+    options: {
+      auth: qodercliAuth(),
+      resolveModel,
+    },
+  });
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import query, QoderAgentOptions
+  from qoder_agent_sdk.types import ModelPolicyContext, ModelPolicyResult, ModelPolicyProvider
+
+  resolve_model: ModelPolicyProvider = lambda context: {"model": "performance"}
+
+  options = QoderAgentOptions(resolve_model=resolve_model)
+
+  async for msg in query(prompt="Analyze this code", options=options):
+      print(msg)
+  ```
+
+  ```java Java
+  ModelPolicyProvider resolveModel = context ->
+          CompletableFuture.completedFuture(ModelId.of("performance"));
+
+  SessionOptions options = SessionOptions.builder()
+          .modelSelection(ModelSelection.dynamic(resolveModel))
+          .build();
+
+  QoderQuery query = client.query(OneShotQueryRequest.builder()
+          .prompt("Analyze this code")
+          .options(options)
+          .build());
+  ```
+</CodeGroup>
+
+The callback receives the request's purpose, session info, and the list of currently available models. In Java these come from `ModelRequestContext` methods such as `purpose()`, `sessionId()`, and `availableModels()`; optional fields return `Optional`.
+
+<div id="routing-by-purpose" />
+
+### Routing by purpose
+
+Use a different model per purpose:
+
+<CodeGroup>
+  ```typescript TypeScript
+  const resolveModel: ModelPolicyProvider = (context) => {
+    switch (context.purpose) {
+      case 'main':       return { model: 'performance' };
+      case 'subagent':   return { model: 'efficient' };
+      case 'compact':    return { model: 'lite' };
+      default:           return { model: 'auto' };
+    }
+  };
+  ```
+
+  ```python Python
+  def resolve_model(context: ModelPolicyContext) -> ModelPolicyResult:
+      match context.get("purpose"):
+          case "main":     return {"model": "performance"}
+          case "subagent": return {"model": "efficient"}
+          case "compact":  return {"model": "lite"}
+          case _:          return {"model": "auto"}
+  ```
+
+  ```java Java
+  ModelPolicyProvider resolveModel = context -> {
+      switch (context.purpose().orElse("")) {
+          case "main":     return CompletableFuture.completedFuture(ModelId.of("performance"));
+          case "subagent": return CompletableFuture.completedFuture(ModelId.of("efficient"));
+          case "compact":  return CompletableFuture.completedFuture(ModelId.of("lite"));
+          default:         return CompletableFuture.completedFuture(ModelId.of("auto"));
+      }
+  };
+  ```
+</CodeGroup>
+
+Purposes cover scenarios like main conversation, sub-agent, context compaction, WebFetch, and image generation. For the full list, see [SDK References](/cli/sdk/references).
+
+<div id="returning-model-parameters" />
+
+### Returning model parameters
+
+Return `parameters` with the selected model to override the context window and thinking depth for that LLM request. These keys are camelCase at the SDK control boundary:
+
+<CodeGroup>
+  ```typescript TypeScript
+  const resolveModel: ModelPolicyProvider = (context) => {
+    return {
+      model: 'ultimate',
+      parameters: {
+        contextWindow: 200000,
+        reasoningEffort: 'high',
+      },
+    };
+  };
+  ```
+
+  ```python Python
+  def resolve_model(context: ModelPolicyContext) -> ModelPolicyResult:
+      return {
+          "model": "ultimate",
+          "parameters": {
+              "contextWindow": 200000,
+              "reasoningEffort": "high",
+          },
+      }
+  ```
+
+  ```java Java
+  ModelDecisionProvider resolveModel = context ->
+          CompletableFuture.completedFuture(ModelPolicyResult.builder()
+                  .model(ModelId.of("ultimate"))
+                  .parameters(JsonObject.builder()
+                          .put("contextWindow", JsonNumber.of(200000))
+                          .put("reasoningEffort", JsonString.of("high"))
+                          .build())
+                  .build());
+
+  SessionOptions options = SessionOptions.builder()
+          .modelSelection(ModelSelection.policy(resolveModel))
+          .build();
+  ```
+</CodeGroup>
+
+To return parameters in Java, use `ModelSelection.policy(...)`; the `parameters(JsonObject)` content is passed to the CLI as is. To keep the model the CLI already chose, return `ModelPolicyResult.keepCurrent()`.
+
+These values should match configurations the current model supports. Context-window and thinking metadata are exposed through the callback's `availableModels` input in `ModelInfo.context_config` and `ModelInfo.thinking_config`. Java's `ModelInfo` does not model this metadata; read it from `ModelInfo.raw()`.
+
+<div id="timeout" />
+
+### Timeout
+
+The callback has a default timeout (in milliseconds). Increase it when the callback performs remote I/O:
+
+<CodeGroup>
+  ```typescript TypeScript
+  { resolveModel, resolveModelTimeoutMs: 800 }
+  ```
+
+  ```python Python
+  options = QoderAgentOptions(
+      resolve_model=resolve_model,
+      resolve_model_timeout_ms=800,
+  )
+  ```
+
+  ```java Java
+  SessionOptions options = SessionOptions.builder()
+          .modelSelection(ModelSelection.dynamic(resolveModel))
+          .resolveModelTimeoutMs(800)
+          .build();
+  ```
+</CodeGroup>
+
+In Java the default timeout is 500 ms, and `0` means no limit.
+
+<div id="runtime-operations" />
+
+## Runtime operations
+
+While a session is running you can fetch the account's currently available model list:
+
+<CodeGroup>
+  ```typescript TypeScript
+  import { qodercliAuth, query } from '@qoder-ai/qoder-agent-sdk';
+
+  const q = query({
+    prompt: '...',
+    options: { auth: qodercliAuth() },
+  });
+
+  const models = await q.getAvailableModels();
+  for (const m of models) {
+    console.log(`${m.value}\t${m.displayName}\t${m.isEnabled ?? true}`);
+  }
+  ```
+
+  ```python Python
+  from qoder_agent_sdk import query, QoderAgentOptions
+
+  options = QoderAgentOptions(...)
+
+  async with QoderSDKClient(options=options) as client:
+      models = await client.get_available_models()
+      for m in models:
+          print(f"{m['value']}\t{m['displayName']}\t{m.get('isEnabled', True)}")
+  ```
+
+  ```java Java
+  try (QoderClient client = QoderClient.builder().auth(Auth.accessTokenEnv()).build();
+       QoderSession session = client.openSession(SessionOptions.defaults())
+               .toCompletableFuture().join()) {
+      List<ModelInfo> models = session.getAvailableModels().toCompletableFuture().join();
+      for (ModelInfo m : models) {
+          System.out.println(m.modelId().value() + "\t" + m.displayName().orElse("") + "\t" + m.isEnabled());
+      }
+  }
+  ```
+</CodeGroup>
+
+In Java, call `getAvailableModels()` on a `QoderSession`; you can query right after the session opens, without sending input. Pass `ModelCatalogOptions` to choose explicitly between a live read and the cache. When the CLI omits the `isEnabled` field, Java's `ModelInfo.isEnabled()` returns `false`, unlike the TypeScript example above, which treats it as `true`.
+
+You can also switch the current model in fixed-model mode. For specific method signatures, see [SDK References](/cli/sdk/references). Java has no method for switching the current model.
+
+<div id="error-handling" />
+
+<div id="error-handling" />
+
+## Error handling
+
+Dynamic-selection mode has **no automatic fallback** — a callback that times out, throws, or returns an empty model causes the query to fail. Handle errors inside the callback:
+
+<CodeGroup>
+  ```typescript TypeScript
+  const resolveModel: ModelPolicyProvider = async (context) => {
+    try {
+      const policy = await fetchRemotePolicy(context);
+      return { model: policy.model };
+    } catch {
+      return { model: 'auto' };   // fallback, must be non-empty
+    }
+  };
+  ```
+
+  ```python Python
+  async def resolve_model(context: ModelPolicyContext) -> ModelPolicyResult:
+      try:
+          policy = await fetch_remote_policy(context)
+          return {"model": policy["model"]}
+      except Exception:
+          return {"model": "auto"}  # fallback, must be non-empty
+  ```
+
+  ```java Java
+  ModelPolicyProvider resolveModel = context ->
+          fetchRemotePolicy(context)
+                  .thenApply(policy -> ModelId.of(policy.model()))
+                  .exceptionally(error -> ModelId.of("auto"));   // fallback, must be non-empty
+  ```
+</CodeGroup>
+
+In Java, if the callback throws, returns an exceptionally completed stage, or times out, that model request fails and does not fall back to the initial model. `exceptionally(...)` only covers the callback's own failures; waiting past `resolveModelTimeoutMs` still fails. These failures are not delivered to the application as exceptions. The SDK only returns an error code to the CLI (`MODEL_RESOLUTION_TIMEOUT` for a timeout, `CALLBACK_EXECUTION_FAILED` for a callback failure) and emits an `inbound_control_request_failed` diagnostic event whose `detail` contains `error=<code>`. To observe these failures, register a diagnostics listener, and handle the turn's result through `ResultMessage.outcome()`.
+
+For full field and type definitions, see [SDK References](/cli/sdk/references).
+
